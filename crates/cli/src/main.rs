@@ -1,6 +1,10 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
+#[cfg(windows)]
+use winreg::enums::HKEY_CURRENT_USER;
+#[cfg(windows)]
+use winreg::RegKey;
 
 #[derive(Parser)]
 #[command(name = "harbor")]
@@ -57,6 +61,11 @@ enum Commands {
         #[arg(default_value = "stdout")]
         stream: String,
     },
+    TrayInstall {
+        #[arg(long)]
+        source: Option<String>,
+    },
+    TrayUninstall,
 }
 
 fn main() -> Result<()> {
@@ -130,6 +139,8 @@ fn main() -> Result<()> {
             println!("{}", content);
             Ok(())
         }
+        Commands::TrayInstall { source } => tray_install(source),
+        Commands::TrayUninstall => tray_uninstall(),
     }
 }
 
@@ -148,6 +159,49 @@ fn init_config(path: &str) -> Result<()> {
     std::fs::write(path, sample)?;
     println!("created {}", path);
     Ok(())
+}
+
+#[cfg(windows)]
+fn tray_install(source: Option<String>) -> Result<()> {
+    let src = if let Some(s) = source {
+        PathBuf::from(s)
+    } else {
+        PathBuf::from("target/release/harbor-tray.exe")
+    };
+    if !src.exists() {
+        anyhow::bail!("source not found: {}", src.display());
+    }
+    let install_dir = std::env::var("LOCALAPPDATA")
+        .map(|p| PathBuf::from(p).join("Harbor"))
+        .unwrap_or(PathBuf::from("C:\\Harbor"));
+    std::fs::create_dir_all(&install_dir)?;
+    let dest = install_dir.join("harbor-tray.exe");
+    std::fs::copy(&src, &dest)?;
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    let path = hkcu.open_subkey_with_flags("Software\\Microsoft\\Windows\\CurrentVersion\\Run", winreg::enums::KEY_WRITE)?;
+    path.set_value("HarborTray", &dest.to_string_lossy().to_string())?;
+    println!("installed {}", dest.display());
+    Ok(())
+}
+
+#[cfg(not(windows))]
+fn tray_install(_source: Option<String>) -> Result<()> {
+    anyhow::bail!("windows only");
+}
+
+#[cfg(windows)]
+fn tray_uninstall() -> Result<()> {
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    if let Ok(path) = hkcu.open_subkey_with_flags("Software\\Microsoft\\Windows\\CurrentVersion\\Run", winreg::enums::KEY_WRITE) {
+        let _ = path.delete_value("HarborTray");
+    }
+    println!("uninstalled");
+    Ok(())
+}
+
+#[cfg(not(windows))]
+fn tray_uninstall() -> Result<()> {
+    anyhow::bail!("windows only");
 }
 
 fn init_downloads_config(path: &str) -> Result<()> {
