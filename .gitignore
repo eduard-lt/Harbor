@@ -1,0 +1,6 @@
+plan.md
+target
+**/*.rs.bk
+**/*.swp
+/.vscode
+Cargo.lock
