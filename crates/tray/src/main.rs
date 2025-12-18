@@ -120,6 +120,8 @@ fn main() -> Result<()> {
     let watching = Arc::new(AtomicBool::new(false));
     let handle: Arc<Mutex<Option<thread::JoinHandle<()>>>> = Arc::new(Mutex::new(None));
 
+    let cfg_arc = Arc::new(cfg);
+
     let mut icon = nwg::Icon::default();
     nwg::Icon::builder()
         .source_system(Some(nwg::OemIcon::Information))
@@ -144,12 +146,14 @@ fn main() -> Result<()> {
     let mut item_start = nwg::MenuItem::default();
     nwg::MenuItem::builder()
         .text("Start Watching")
+        .check(true)
         .parent(&tray_menu)
         .build(&mut item_start)?;
 
     let mut item_stop = nwg::MenuItem::default();
     nwg::MenuItem::builder()
         .text("Stop Watching")
+        .check(false)
         .parent(&tray_menu)
         .build(&mut item_stop)?;
 
@@ -198,7 +202,6 @@ fn main() -> Result<()> {
 
     let ui_ref = std::rc::Rc::new(ui);
     let ui_weak = std::rc::Rc::downgrade(&ui_ref);
-    let cfg_arc = Arc::new(cfg);
     let cfg_open_path = cfg_path.clone();
     let downloads_dir = PathBuf::from(&cfg_open_path)
         .parent()
@@ -206,6 +209,7 @@ fn main() -> Result<()> {
         .unwrap_or(PathBuf::from(&cfg_arc.download_dir));
     let watching_c = watching.clone();
     let handle_c = handle.clone();
+    let cfg_arc_c = cfg_arc.clone();
 
     let handler = move |evt, _evt_data, handle| {
         if let Some(ui) = ui_weak.upgrade() {
@@ -217,11 +221,11 @@ fn main() -> Result<()> {
                 }
                 nwg::Event::OnMenuItemSelected => {
                     if handle == ui.item_start {
-                        start_watching(&watching_c, &cfg_arc, &handle_c);
+                        start_watching(&watching_c, &cfg_arc_c, &handle_c);
                     } else if handle == ui.item_stop {
                         stop_watching(&watching_c, &handle_c);
                     } else if handle == ui.item_organize {
-                        if let Ok(actions) = organize_once(&cfg_arc) {
+                        if let Ok(actions) = organize_once(&cfg_arc_c) {
                             append_recent(&actions);
                             if !actions.is_empty() {
                                 ui.tray.show(
@@ -248,6 +252,8 @@ fn main() -> Result<()> {
         }
     };
     let _eh = nwg::full_bind_event_handler(&ui_ref.window.handle, handler);
+
+    start_watching(&watching, &cfg_arc, &handle);
 
     nwg::dispatch_thread_events();
     Ok(())
