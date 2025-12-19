@@ -179,7 +179,8 @@ fn tray_install(source: Option<String>) -> Result<()> {
     std::fs::copy(&src, &dest)?;
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
     let path = hkcu.open_subkey_with_flags("Software\\Microsoft\\Windows\\CurrentVersion\\Run", winreg::enums::KEY_WRITE)?;
-    path.set_value("HarborTray", &dest.to_string_lossy().to_string())?;
+    let val = format!("\"{}\"", dest.display());
+    path.set_value("HarborTray", &val)?;
     println!("installed {}", dest.display());
     Ok(())
 }

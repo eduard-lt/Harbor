@@ -1,6 +1,8 @@
+#![windows_subsystem = "windows"]
+
 use anyhow::Result;
 use harbor_core::downloads::{
-    load_downloads_config, organize_once, watch_polling, DownloadsConfig,
+    load_downloads_config, organize_once, watch_polling, DownloadsConfig, Rule,
 };
 use std::path::PathBuf;
 use std::sync::{
@@ -111,11 +113,97 @@ fn append_recent(actions: &[(PathBuf, PathBuf, String)]) {
 fn main() -> Result<()> {
     nwg::init()?;
 
-    let cfg_path = PathBuf::from("harbor.downloads.yaml");
+    let cfg_path = local_appdata_harbor().join("harbor.downloads.yaml");
     let cfg = if cfg_path.exists() {
         load_downloads_config(&cfg_path)?
     } else {
-        load_downloads_config(PathBuf::from("examples/harbor.downloads.yaml"))?
+        let user = std::env::var("USERPROFILE").unwrap_or_else(|_| "C:\\Users\\Public".to_string());
+        let dl = format!("{}\\Downloads", user);
+        let pictures = format!("{}\\Pictures", user);
+        let videos = format!("{}\\Videos", user);
+        let docs = format!("{}\\Documents", user);
+        let music = format!("{}\\Music", user);
+        let archives = format!("{}\\Downloads\\Archives", user);
+        let installers = format!("{}\\Downloads\\Installers", user);
+        DownloadsConfig {
+            download_dir: dl,
+            min_age_secs: Some(5),
+            rules: vec![
+                Rule {
+                    name: "Images".to_string(),
+                    extensions: Some(
+                        ["jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "heic"]
+                            .iter()
+                            .map(|s| s.to_string())
+                            .collect(),
+                    ),
+                    pattern: None,
+                    min_size_bytes: None,
+                    max_size_bytes: None,
+                    target_dir: pictures,
+                },
+                Rule {
+                    name: "Videos".to_string(),
+                    extensions: Some(
+                        ["mp4", "mkv", "avi", "mov", "wmv", "webm"]
+                            .iter()
+                            .map(|s| s.to_string())
+                            .collect(),
+                    ),
+                    pattern: None,
+                    min_size_bytes: None,
+                    max_size_bytes: None,
+                    target_dir: videos,
+                },
+                Rule {
+                    name: "Music".to_string(),
+                    extensions: Some(
+                        ["mp3", "flac", "wav", "aac", "ogg"]
+                            .iter()
+                            .map(|s| s.to_string())
+                            .collect(),
+                    ),
+                    pattern: None,
+                    min_size_bytes: None,
+                    max_size_bytes: None,
+                    target_dir: music,
+                },
+                Rule {
+                    name: "Archives".to_string(),
+                    extensions: Some(
+                        ["zip", "rar", "7z", "tar", "gz"]
+                            .iter()
+                            .map(|s| s.to_string())
+                            .collect(),
+                    ),
+                    pattern: None,
+                    min_size_bytes: None,
+                    max_size_bytes: None,
+                    target_dir: archives,
+                },
+                Rule {
+                    name: "Documents".to_string(),
+                    extensions: Some(
+                        ["pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "rtf"]
+                            .iter()
+                            .map(|s| s.to_string())
+                            .collect(),
+                    ),
+                    pattern: None,
+                    min_size_bytes: None,
+                    max_size_bytes: None,
+                    target_dir: docs,
+                },
+                Rule {
+                    name: "Installers".to_string(),
+                    extensions: Some(["exe", "msi"].iter().map(|s| s.to_string()).collect()),
+                    pattern: None,
+                    min_size_bytes: None,
+                    max_size_bytes: None,
+                    target_dir: installers,
+                },
+            ],
+        }
     };
     let watching = Arc::new(AtomicBool::new(false));
     let handle: Arc<Mutex<Option<thread::JoinHandle<()>>>> = Arc::new(Mutex::new(None));
