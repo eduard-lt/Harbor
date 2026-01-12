@@ -4,15 +4,20 @@ rules:
   - name: images
     extensions: ["jpg", "jpeg", "png", "gif", "webp"]
     target_dir: "C:\\Users\\%USERNAME%\\Downloads\\Images"
+    create_symlink: true
   - name: videos
     extensions: ["mp4", "mov", "mkv", "avi"]
     target_dir: "C:\\Users\\%USERNAME%\\Downloads\\Videos"
+    create_symlink: true
   - name: archives
     extensions: ["zip", "rar", "7z", "tar", "gz"]
     target_dir: "C:\\Users\\%USERNAME%\\Downloads\\Archives"
+    create_symlink: true
   - name: docs
     extensions: ["pdf", "docx", "xlsx", "pptx", "txt"]
     target_dir: "C:\\Users\\%USERNAME%\\Downloads\\Documents"
+    create_symlink: true
   - name: installers
     extensions: ["exe", "msi"]
     target_dir: "C:\\Users\\%USERNAME%\\Downloads\\Installers"
+    create_symlink: true

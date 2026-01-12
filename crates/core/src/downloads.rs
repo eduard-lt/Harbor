@@ -3,6 +3,8 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
+#[cfg(windows)]
+use std::os::windows::process::CommandExt;
 use std::thread;
 use std::time::{Duration, SystemTime};
 
@@ -21,6 +23,7 @@ pub struct Rule {
     pub min_size_bytes: Option<u64>,
     pub max_size_bytes: Option<u64>,
     pub target_dir: String,
+    pub create_symlink: Option<bool>,
 }
 
 pub fn load_downloads_config(path: impl AsRef<Path>) -> Result<DownloadsConfig> {
@@ -107,14 +110,18 @@ fn unique_target(target: &Path) -> PathBuf {
     }
 }
 
-pub fn organize_once(cfg: &DownloadsConfig) -> Result<Vec<(PathBuf, PathBuf, String)>> {
+pub fn organize_once(cfg: &DownloadsConfig) -> Result<Vec<(PathBuf, PathBuf, String, Option<String>)>> {
     let base = PathBuf::from(&cfg.download_dir);
     let min_age = Duration::from_secs(cfg.min_age_secs.unwrap_or(5));
     let mut actions = Vec::new();
     for entry in fs::read_dir(&base).with_context(|| format!("list {}", base.display()))? {
         let entry = entry?;
         let path = entry.path();
-        if !path.is_file() {
+        let meta = match fs::symlink_metadata(&path) {
+            Ok(m) => m,
+            Err(_) => continue,
+        };
+        if meta.file_type().is_symlink() || !meta.is_file() {
             continue;
         }
         if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
@@ -122,7 +129,6 @@ pub fn organize_once(cfg: &DownloadsConfig) -> Result<Vec<(PathBuf, PathBuf, Str
                 continue;
             }
         }
-        let meta = fs::metadata(&path)?;
         if let Ok(modified) = meta.modified() {
             if SystemTime::now()
                 .duration_since(modified)
@@ -150,15 +156,50 @@ pub fn organize_once(cfg: &DownloadsConfig) -> Result<Vec<(PathBuf, PathBuf, Str
         if let Some((rule, target)) = applied {
             fs::rename(&path, &target)
                 .with_context(|| format!("move {} -> {}", path.display(), target.display()))?;
-            actions.push((path, target.clone(), rule.name.clone()));
+
+            let mut symlink_info = None;
+            if rule.create_symlink.unwrap_or(false) {
+                #[cfg(windows)]
+                let res = std::os::windows::fs::symlink_file(&target, &path);
+                #[cfg(unix)]
+                let res = std::os::unix::fs::symlink(&target, &path);
+                
+                match res {
+                    Ok(_) => {
+                        symlink_info = Some("Symlink created".to_string());
+                        #[cfg(windows)]
+                        {
+                            let _ = std::process::Command::new("attrib")
+                                .arg("+h")
+                                .arg(&path)
+                                .arg("/L")
+                                .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                                .status();
+                        }
+                    }
+                    Err(e) => symlink_info = Some(format!("Symlink failed: {}", e)),
+                }
+            }
+
+            actions.push((path, target.clone(), rule.name.clone(), symlink_info));
         }
     }
     Ok(actions)
 }
 
-pub fn watch_polling(cfg: &DownloadsConfig, interval_secs: u64) -> Result<()> {
+pub fn watch_polling<F>(cfg: &DownloadsConfig, interval_secs: u64, callback: F) -> Result<()>
+where
+    F: Fn(&[(PathBuf, PathBuf, String, Option<String>)]),
+{
     loop {
-        let _ = organize_once(cfg);
+        match organize_once(cfg) {
+            Ok(actions) => {
+                if !actions.is_empty() {
+                    callback(&actions);
+                }
+            }
+            Err(e) => eprintln!("organize error: {}", e),
+        }
         thread::sleep(Duration::from_secs(interval_secs));
     }
 }
@@ -181,4 +222,49 @@ fn expand_env(input: &str) -> String {
         i += 1;
     }
     out
+}
+
+pub fn cleanup_old_symlinks(cfg: &DownloadsConfig) -> Result<usize> {
+    let base = PathBuf::from(&cfg.download_dir);
+    if !base.exists() {
+        return Ok(0);
+    }
+    
+    let mut count = 0;
+    // Collect target dirs to check against
+    let target_dirs: Vec<PathBuf> = cfg.rules.iter()
+        .map(|r| PathBuf::from(&r.target_dir))
+        .collect();
+
+    for entry in fs::read_dir(&base).with_context(|| format!("list {}", base.display()))? {
+        let entry = entry?;
+        let path = entry.path();
+        
+        let meta = match fs::symlink_metadata(&path) {
+            Ok(m) => m,
+            Err(_) => continue,
+        };
+
+        if meta.file_type().is_symlink() {
+            // Check if it points to one of our folders
+            if let Ok(target) = fs::read_link(&path) {
+                // If relative symlink, resolve it relative to base
+                let abs_target = if target.is_relative() {
+                    base.join(&target)
+                } else {
+                    target
+                };
+
+                let points_to_our_dir = target_dirs.iter().any(|d| abs_target.starts_with(d));
+                
+                if points_to_our_dir {
+                    // It's one of ours, delete it
+                    if fs::remove_file(&path).is_ok() {
+                        count += 1;
+                    }
+                }
+            }
+        }
+    }
+    Ok(count)
 }

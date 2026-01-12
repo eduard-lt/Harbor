@@ -2,7 +2,8 @@
 
 use anyhow::Result;
 use harbor_core::downloads::{
-    load_downloads_config, organize_once, watch_polling, DownloadsConfig, Rule,
+    cleanup_old_symlinks, load_downloads_config, organize_once, watch_polling, DownloadsConfig,
+    Rule,
 };
 use std::path::PathBuf;
 use std::sync::{
@@ -42,7 +43,9 @@ fn start_watching(
     let cfg = cfg.clone();
     let w = watching.clone();
     let h = thread::spawn(move || {
-        let _ = watch_polling(&cfg, 5);
+        let _ = watch_polling(&cfg, 5, |actions| {
+            append_recent(actions);
+        });
         w.store(false, Ordering::SeqCst);
     });
     let mut guard = handle.lock().unwrap();
@@ -87,7 +90,7 @@ fn recent_log_path() -> PathBuf {
     local_appdata_harbor().join("recent_moves.log")
 }
 
-fn append_recent(actions: &[(PathBuf, PathBuf, String)]) {
+fn append_recent(actions: &[(PathBuf, PathBuf, String, Option<String>)]) {
     if actions.is_empty() {
         return;
     }
@@ -95,12 +98,14 @@ fn append_recent(actions: &[(PathBuf, PathBuf, String)]) {
     let _ = std::fs::create_dir_all(&dir);
     let log = recent_log_path();
     let mut buf = String::new();
-    for (from, to, rule) in actions {
+    for (from, to, rule, symlink_info) in actions {
+        let symlink_msg = symlink_info.as_deref().unwrap_or("");
         buf.push_str(&format!(
-            "{} -> {} ({})\n",
+            "{} -> {} ({}) {}\n",
             from.display(),
             to.display(),
-            rule
+            rule,
+            symlink_msg
         ));
     }
     let _ = std::fs::OpenOptions::new()
@@ -119,10 +124,10 @@ fn main() -> Result<()> {
     } else {
         let user = std::env::var("USERPROFILE").unwrap_or_else(|_| "C:\\Users\\Public".to_string());
         let dl = format!("{}\\Downloads", user);
-        let pictures = format!("{}\\Pictures", user);
-        let videos = format!("{}\\Videos", user);
-        let docs = format!("{}\\Documents", user);
-        let music = format!("{}\\Music", user);
+        let pictures = format!("{}\\Downloads\\Images", user);
+        let videos = format!("{}\\Downloads\\Videos", user);
+        let music = format!("{}\\Downloads\\Music", user);
+        let docs = format!("{}\\Downloads\\Documents", user);
         let archives = format!("{}\\Downloads\\Archives", user);
         let installers = format!("{}\\Downloads\\Installers", user);
         let torrents = format!("{}\\Downloads\\Torrents", user);
@@ -146,6 +151,7 @@ fn main() -> Result<()> {
                     min_size_bytes: None,
                     max_size_bytes: None,
                     target_dir: pictures,
+                    create_symlink: None,
                 },
                 Rule {
                     name: "Videos".to_string(),
@@ -159,6 +165,7 @@ fn main() -> Result<()> {
                     min_size_bytes: None,
                     max_size_bytes: None,
                     target_dir: videos,
+                    create_symlink: None,
                 },
                 Rule {
                     name: "Music".to_string(),
@@ -172,6 +179,7 @@ fn main() -> Result<()> {
                     min_size_bytes: None,
                     max_size_bytes: None,
                     target_dir: music,
+                    create_symlink: None,
                 },
                 Rule {
                     name: "Archives".to_string(),
@@ -185,6 +193,7 @@ fn main() -> Result<()> {
                     min_size_bytes: None,
                     max_size_bytes: None,
                     target_dir: archives,
+                    create_symlink: None,
                 },
                 Rule {
                     name: "Documents".to_string(),
@@ -198,6 +207,7 @@ fn main() -> Result<()> {
                     min_size_bytes: None,
                     max_size_bytes: None,
                     target_dir: docs.clone(),
+                    create_symlink: None,
                 },
                 Rule {
                     name: "Installers".to_string(),
@@ -211,6 +221,7 @@ fn main() -> Result<()> {
                     min_size_bytes: None,
                     max_size_bytes: None,
                     target_dir: installers,
+                    create_symlink: None,
                 },
                 Rule {
                     name: "ISOs".to_string(),
@@ -219,6 +230,7 @@ fn main() -> Result<()> {
                     min_size_bytes: None,
                     max_size_bytes: None,
                     target_dir: isos,
+                    create_symlink: None,
                 },
                 Rule {
                     name: "Torrents".to_string(),
@@ -227,6 +239,7 @@ fn main() -> Result<()> {
                     min_size_bytes: None,
                     max_size_bytes: None,
                     target_dir: torrents,
+                    create_symlink: None,
                 },
                 Rule {
                     name: "Dev".to_string(),
@@ -240,6 +253,7 @@ fn main() -> Result<()> {
                     min_size_bytes: None,
                     max_size_bytes: None,
                     target_dir: dev,
+                    create_symlink: None,
                 },
                 Rule {
                     name: "Data".to_string(),
@@ -248,6 +262,7 @@ fn main() -> Result<()> {
                     min_size_bytes: None,
                     max_size_bytes: None,
                     target_dir: docs,
+                    create_symlink: None,
                 },
                 Rule {
                     name: "Web Pages".to_string(),
@@ -256,6 +271,7 @@ fn main() -> Result<()> {
                     min_size_bytes: None,
                     max_size_bytes: None,
                     target_dir: webpages,
+                    create_symlink: None,
                 },
                 Rule {
                     name: "Subtitles".to_string(),
@@ -264,6 +280,7 @@ fn main() -> Result<()> {
                     min_size_bytes: None,
                     max_size_bytes: None,
                     target_dir: subtitles,
+                    create_symlink: None,
                 },
             ],
         }
@@ -393,6 +410,12 @@ fn main() -> Result<()> {
                         open_config(&cfg_open_path);
                     } else if handle == ui.item_open_recent {
                         let p = recent_log_path();
+                        if !p.exists() {
+                            if let Some(parent) = p.parent() {
+                                let _ = std::fs::create_dir_all(parent);
+                            }
+                            let _ = std::fs::write(&p, "Recent Moves Log\n----------------\n");
+                        }
                         open_config(&p);
                     } else if handle == ui.item_exit {
                         nwg::stop_thread_dispatch();
@@ -403,6 +426,20 @@ fn main() -> Result<()> {
         }
     };
     let _eh = nwg::full_bind_event_handler(&ui_ref.window.handle, handler);
+
+    // Cleanup old symlinks on startup
+    if let Ok(count) = cleanup_old_symlinks(&cfg_arc) {
+        if count > 0 {
+            let _ = std::fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(recent_log_path())
+                .and_then(|mut f| {
+                    use std::io::Write;
+                    writeln!(f, "Startup: Cleaned up {} old symlink(s)", count)
+                });
+        }
+    }
 
     start_watching(&watching, &cfg_arc, &handle);
 

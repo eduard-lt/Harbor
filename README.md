@@ -92,6 +92,8 @@ Configuration
   - `pattern`: optional regex applied to file name
   - `min_size_bytes` / `max_size_bytes`: optional size filters
   - `target_dir`: destination folder (supports `%ENV%` expansion)
+  - `create_symlink`: optional boolean (default `false`). If `true`, leaves a symbolic link in the download folder pointing to the moved file.
+    - *Note: Requires Developer Mode or Admin privileges on Windows.*
   - `min_age_secs`: global stability delay before moving
 
 Defaults

@@ -78,8 +78,9 @@ fn main() -> Result<()> {
         Commands::DownloadsOrganize { path } => {
             let cfg = harbor_core::downloads::load_downloads_config(&path)?;
             let actions = harbor_core::downloads::organize_once(&cfg)?;
-            for (from, to, rule) in actions {
-                println!("{} -> {} ({})", from.display(), to.display(), rule);
+            for (from, to, rule, symlink_info) in actions {
+                let sym = symlink_info.unwrap_or_default();
+                println!("{} -> {} ({}) {}", from.display(), to.display(), rule, sym);
             }
             Ok(())
         }
@@ -88,7 +89,12 @@ fn main() -> Result<()> {
             interval_secs,
         } => {
             let cfg = harbor_core::downloads::load_downloads_config(&path)?;
-            harbor_core::downloads::watch_polling(&cfg, interval_secs)?;
+            harbor_core::downloads::watch_polling(&cfg, interval_secs, |actions| {
+                for (from, to, rule, symlink_info) in actions {
+                    let sym = symlink_info.as_deref().unwrap_or_default();
+                    println!("{} -> {} ({}) {}", from.display(), to.display(), rule, sym);
+                }
+            })?;
             Ok(())
         }
         Commands::Validate { path } => {
