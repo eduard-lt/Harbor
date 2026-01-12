@@ -1,6 +1,6 @@
 ⚓ Harbor
 
-Version: 0.1.0
+Version: 0.2.0
 
 Harbor is a lightweight Windows utility that keeps your Downloads folder tidy. It watches for stable files and moves them into organized folders based on extensions and simple patterns. A tray app provides quick control and feedback; a CLI helps with power‑user workflows.
 
