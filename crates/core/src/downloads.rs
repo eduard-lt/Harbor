@@ -26,6 +26,25 @@ pub struct Rule {
     pub create_symlink: Option<bool>,
 }
 
+/// Loads and parses the downloads configuration file.
+///
+/// This function reads a YAML file from the specified path, parses it into a
+/// `DownloadsConfig` struct, and expands environment variables (like `%USERPROFILE%`)
+/// in the paths.
+///
+/// # Arguments
+///
+/// * `path` - Path to the configuration file
+///
+/// # Examples
+///
+/// ```no_run
+/// use harbor_core::downloads::load_downloads_config;
+///
+/// if let Ok(cfg) = load_downloads_config("harbor.downloads.yaml") {
+///     println!("Monitoring {}", cfg.download_dir);
+/// }
+/// ```
 pub fn load_downloads_config(path: impl AsRef<Path>) -> Result<DownloadsConfig> {
     let p = path.as_ref();
     let content = fs::read_to_string(p).with_context(|| format!("read {}", p.display()))?;
@@ -110,6 +129,14 @@ fn unique_target(target: &Path) -> PathBuf {
     }
 }
 
+/// Runs a single organization pass based on the provided configuration.
+///
+/// Iterates through files in the `download_dir`, checks them against the defined `rules`,
+/// and moves matching files to their target directories. It also handles safe renaming
+/// (to avoid overwrites) and optional symlink creation.
+///
+/// Returns a list of actions taken, where each action is a tuple:
+/// `(original_path, new_path, rule_name, symlink_info)`.
 pub fn organize_once(cfg: &DownloadsConfig) -> Result<Vec<(PathBuf, PathBuf, String, Option<String>)>> {
     let base = PathBuf::from(&cfg.download_dir);
     let min_age = Duration::from_secs(cfg.min_age_secs.unwrap_or(5));
@@ -187,6 +214,10 @@ pub fn organize_once(cfg: &DownloadsConfig) -> Result<Vec<(PathBuf, PathBuf, Str
     Ok(actions)
 }
 
+/// Continuously polls the download directory and runs organization logic.
+///
+/// This runs `organize_once` in a loop, sleeping for `interval_secs` between iterations.
+/// When actions are taken, the `callback` is invoked with the list of actions.
 pub fn watch_polling<F>(cfg: &DownloadsConfig, interval_secs: u64, callback: F) -> Result<()>
 where
     F: Fn(&[(PathBuf, PathBuf, String, Option<String>)]),
@@ -224,6 +255,13 @@ fn expand_env(input: &str) -> String {
     out
 }
 
+/// Scans the download directory for old symlinks created by Harbor and removes them.
+///
+/// A symlink is considered "old" (and safe to remove) if:
+/// 1. It is a valid symbolic link.
+/// 2. It points to a file inside one of the configured `target_dirs`.
+///
+/// Returns the number of symlinks removed.
 pub fn cleanup_old_symlinks(cfg: &DownloadsConfig) -> Result<usize> {
     let base = PathBuf::from(&cfg.download_dir);
     if !base.exists() {
@@ -267,4 +305,182 @@ pub fn cleanup_old_symlinks(cfg: &DownloadsConfig) -> Result<usize> {
         }
     }
     Ok(count)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Write;
+    use tempfile::TempDir;
+
+    #[test]
+    fn test_expand_env() {
+        std::env::set_var("TEST_VAR", "world");
+        assert_eq!(expand_env("Hello %TEST_VAR%"), "Hello world");
+        assert_eq!(expand_env("%TEST_VAR%"), "world");
+        assert_eq!(expand_env("No vars"), "No vars");
+        assert_eq!(expand_env("Unknown %MISSING_VAR%"), "Unknown ");
+    }
+
+    #[test]
+    fn test_is_partial() {
+        assert!(is_partial("file.crdownload"));
+        assert!(is_partial("file.part"));
+        assert!(is_partial("file.tmp"));
+        assert!(is_partial("file.download"));
+        assert!(is_partial("FILE.CRDOWNLOAD")); // Case check
+        assert!(!is_partial("file.txt"));
+        assert!(!is_partial("image.png"));
+    }
+
+    #[test]
+    fn test_matches_rule() {
+        let temp = TempDir::new().unwrap();
+        let file_path = temp.path().join("test.png");
+        {
+            let mut f = fs::File::create(&file_path).unwrap();
+            f.write_all(b"123").unwrap(); // 3 bytes
+        }
+        let meta = fs::metadata(&file_path).unwrap();
+
+        let rule_ext = Rule {
+            name: "Ext".into(),
+            extensions: Some(vec!["png".into()]),
+            pattern: None,
+            min_size_bytes: None,
+            max_size_bytes: None,
+            target_dir: "target".into(),
+            create_symlink: None,
+        };
+        assert!(matches_rule(&file_path, &meta, &rule_ext));
+
+        let rule_pat = Rule {
+            name: "Pat".into(),
+            extensions: None,
+            pattern: Some(".*st\\.png".into()),
+            min_size_bytes: None,
+            max_size_bytes: None,
+            target_dir: "target".into(),
+            create_symlink: None,
+        };
+        assert!(matches_rule(&file_path, &meta, &rule_pat));
+
+        let rule_size = Rule {
+            name: "Size".into(),
+            extensions: None,
+            pattern: None,
+            min_size_bytes: Some(2),
+            max_size_bytes: Some(10),
+            target_dir: "target".into(),
+            create_symlink: None,
+        };
+        assert!(matches_rule(&file_path, &meta, &rule_size));
+        
+        let rule_fail = Rule {
+            name: "Fail".into(),
+            extensions: Some(vec!["jpg".into()]),
+            pattern: None,
+            min_size_bytes: None,
+            max_size_bytes: None,
+            target_dir: "target".into(),
+            create_symlink: None,
+        };
+        assert!(!matches_rule(&file_path, &meta, &rule_fail));
+    }
+
+    #[test]
+    fn test_unique_target() {
+        let temp = TempDir::new().unwrap();
+        let target = temp.path().join("file.txt");
+        
+        // 1. Doesn't exist
+        assert_eq!(unique_target(&target), target);
+
+        // 2. Exists
+        fs::File::create(&target).unwrap();
+        let expected = temp.path().join("file (1).txt");
+        assert_eq!(unique_target(&target), expected);
+
+        // 3. (1) Exists
+        fs::File::create(&expected).unwrap();
+        let expected_2 = temp.path().join("file (2).txt");
+        assert_eq!(unique_target(&target), expected_2);
+    }
+
+    #[test]
+    fn test_organize_basic() {
+        let root = TempDir::new().unwrap();
+        let dl = root.path().join("Downloads");
+        let target = root.path().join("Images");
+        fs::create_dir(&dl).unwrap();
+
+        // Create file
+        let file_path = dl.join("test.png");
+        {
+            let mut f = fs::File::create(&file_path).unwrap();
+            f.write_all(b"data").unwrap();
+        }
+
+        // Create config
+        let cfg = DownloadsConfig {
+            download_dir: dl.to_str().unwrap().into(),
+            min_age_secs: Some(0), // Immediate move
+            rules: vec![Rule {
+                name: "Images".into(),
+                extensions: Some(vec!["png".into()]),
+                pattern: None,
+                min_size_bytes: None,
+                max_size_bytes: None,
+                target_dir: target.to_str().unwrap().into(),
+                create_symlink: Some(false),
+            }],
+        };
+
+        // Run
+        let actions = organize_once(&cfg).unwrap();
+        assert_eq!(actions.len(), 1);
+        assert!(!file_path.exists());
+        assert!(target.join("test.png").exists());
+    }
+
+    #[test]
+    fn test_cleanup_old_symlinks() {
+        let root = TempDir::new().unwrap();
+        let dl = root.path().join("Downloads");
+        let target = root.path().join("Images");
+        fs::create_dir_all(&dl).unwrap();
+        fs::create_dir_all(&target).unwrap();
+
+        // Create a symlink in dl -> target
+        let symlink_path = dl.join("link.png");
+        
+        #[cfg(windows)]
+        let res = std::os::windows::fs::symlink_file(&target, &symlink_path);
+        #[cfg(unix)]
+        let res = std::os::unix::fs::symlink(&target, &symlink_path);
+
+        // If we can't create symlinks (permissions), skip test
+        if res.is_err() {
+            return;
+        }
+
+        let cfg = DownloadsConfig {
+            download_dir: dl.to_str().unwrap().into(),
+            rules: vec![Rule {
+                name: "Images".into(),
+                extensions: None,
+                pattern: None,
+                min_size_bytes: None,
+                max_size_bytes: None,
+                target_dir: target.to_str().unwrap().into(),
+                create_symlink: None,
+            }],
+            min_age_secs: None,
+        };
+
+        // Clean up
+        let count = cleanup_old_symlinks(&cfg).unwrap();
+        assert_eq!(count, 1);
+        assert!(!symlink_path.exists());
+    }
 }

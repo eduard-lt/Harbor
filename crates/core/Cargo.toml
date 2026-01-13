@@ -1,6 +1,6 @@
 [package]
 name = "harbor-core"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 
 [dependencies]
@@ -12,3 +12,6 @@ thiserror = "1.0.69"
 ureq = { version = "2.9.6", features = ["json"] }
 sysinfo = { version = "0.33.1", features = ["serde"] }
 regex = "1.11.1"
+
+[dev-dependencies]
+tempfile = "3.24.0"
