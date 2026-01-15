@@ -4,6 +4,8 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -23,6 +25,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist\Harbor-windows-x86_64.zip
-            dist\harbor-tray.exe
-            dist\harbor-cli.exe
+            dist/Harbor-windows-x86_64.zip
+            dist/harbor-tray.exe
+            dist/harbor-cli.exe
