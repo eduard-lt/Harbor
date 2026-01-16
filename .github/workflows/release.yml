@@ -16,33 +16,25 @@ jobs:
       
       - uses: dtolnay/rust-toolchain@stable
       
-      - name: Build
-        run: cargo build --release -p harbor-tray -p harbor-cli
+      - name: Install cargo-wix
+        run: cargo install cargo-wix
       
-      - name: Prepare artifacts
-        run: |
-          New-Item -ItemType Directory -Force -Path dist
-          Copy-Item target\release\harbor-tray.exe dist\
-          Copy-Item target\release\harbor-cli.exe dist\
-          if (Test-Path assets) { Copy-Item assets\*.ico dist\ -ErrorAction SilentlyContinue }
-          Compress-Archive -Path dist\* -DestinationPath dist\Harbor-windows-x86_64.zip -Force
+      - name: Build MSI
+        run: cargo wix --package harbor-tray --nocapture
       
-      - name: Verify artifacts
+      - name: Prepare separate executables
         run: |
-          Write-Host "Checking dist directory contents:"
-          Get-ChildItem -Path dist -Recurse
-          Write-Host "`nVerifying required files exist:"
-          if (!(Test-Path "dist\harbor-tray.exe")) { throw "harbor-tray.exe not found" }
-          if (!(Test-Path "dist\harbor-cli.exe")) { throw "harbor-cli.exe not found" }
-          if (!(Test-Path "dist\Harbor-windows-x86_64.zip")) { throw "Harbor-windows-x86_64.zip not found" }
-          Write-Host "All files verified!"
+            New-Item -ItemType Directory -Force -Path dist
+            Copy-Item target\release\harbor-tray.exe dist\
+            Copy-Item target\release\harbor-cli.exe dist\
+            Copy-Item target\wix\*.msi dist\
       
       - name: Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            dist/Harbor-windows-x86_64.zip
+            dist/*.msi
             dist/harbor-tray.exe
             dist/harbor-cli.exe
           fail_on_unmatched_files: true

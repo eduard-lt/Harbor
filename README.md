@@ -1,6 +1,6 @@
 ⚓ Harbor
 
-Version: 0.4.1
+Version: 0.5.0
 
 Harbor is a lightweight Windows utility that keeps your Downloads folder tidy. It watches for stable files and moves them into organized folders based on extensions and simple patterns. A tray app provides quick control and feedback; a CLI helps with power‑user workflows.
 
@@ -17,14 +17,59 @@ Features
   - Shortcuts are **hidden** to keep your folder clean.
   - **Auto-Cleanup**: Old shortcuts are automatically removed when Harbor restarts.
 
-Quick Start
+Installation
 
-- Build tray and CLI:
-  - `cargo build --release -p harbor-tray -p harbor-cli`
-- Install tray for startup:
-  - `target\release\harbor-cli.exe tray-install`
-- Run tray now (no console window):
-  - `"%LOCALAPPDATA%\Harbor\harbor-tray.exe"`
+### From Release (Recommended)
+1.  Go to the [Releases](https://github.com/Eduard2609/Harbor/releases) page.
+2.  Download the latest `.msi` installer (e.g., `harbor-tray-0.5.0-x86_64.msi`).
+3.  Run the installer. Harbor will automatically start and be added to your system tray.
+
+## Building from Source
+
+### Prerequisites
+- [Rust](https://rustup.rs/) (latest stable)
+- [WiX Toolset v3](https://github.com/wixtoolset/wix3/releases) (for MSI installer)
+
+### Using Poe the Poet (Recommended for Devs)
+We use `poe` to manage development tasks.
+
+1.  **Install Poe**:
+    ```powershell
+    uv tool install poethepoet
+    # OR
+    pip install poethepoet
+    ```
+
+2.  **Setup dependencies**:
+    ```powershell
+    poe setup-wix
+    ```
+    *(Requires Administrator privileges to install WiX via winget)*
+
+3.  **Build MSI**:
+    ```powershell
+    poe msi
+    ```
+    The installer will be generated in `target/wix/`.
+
+4.  **Run Tests**:
+    ```powershell
+    poe test
+    ```
+
+### Manual Build
+If you prefer standard Cargo commands:
+
+1.  **Build Binaries**:
+    ```powershell
+    cargo build --release
+    ```
+
+2.  **Build MSI Installer**:
+    ```powershell
+    cargo install cargo-wix
+    cargo wix --package harbor-tray
+    ```
 
 Tray Menu
 
@@ -115,12 +160,12 @@ Development
 Status
 
 - Platforms
-  - Windows: Ready (tray, CLI, icons, startup). Installer: not yet (CLI-based install).
+  - Windows: Ready (tray, CLI, icons, startup, MSI installer).
   - Linux: Partial (CLI/core organize and symlinks; no tray; no autostart; no installer).
   - macOS: Partial/untested (CLI/core likely work; no tray; no installer).
 - Icons: Yes (tray loads `icon_h.ico` → `harbor-tray.ico` → `harbor.ico`).
 - UI: Minimal tray menu; no full UI for rules editing or log viewing.
-- Installer: Not yet; Windows uses `tray-install` to copy and register startup.
+- Installer: Ready (Windows MSI).
 - Stability: Unit tests for core organizing, renaming, rule matching, env expansion, symlink cleanup.
 - Symlinks: Optional, hidden in Downloads, auto-cleanup on startup.
 
@@ -135,7 +180,7 @@ Roadmap / TODO
   - macOS menu bar app; basic autostart integration.
   - Cross‑platform packaging: Windows MSI/Winget, Linux AppImage/.deb, macOS pkg/Homebrew.
 - Installer
-  - Windows MSI with proper shortcuts and uninstall.
+  - [x] Windows MSI with proper shortcuts and uninstall.
   - Optional: settings migration and “reset to defaults”.
 - Config & Rules
   - Built‑in starter templates per platform.

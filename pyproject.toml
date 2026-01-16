@@ -1,0 +1,15 @@
+[project]
+name = "harbor"
+version = "0.5.0"
+description = "Harbor specific tasks"
+
+[tool.poe.tasks]
+build = "cargo build --release"
+test = "cargo test"
+clean = "cargo clean"
+msi = "cargo wix --package harbor-tray"
+setup-wix = { shell = "winget install --id=WiXToolset.WiXToolset -e --accept-source-agreements --accept-package-agreements" }
+
+[tool.poe.tasks.release]
+sequence = ["build", "msi"]
+help = "Build release binaries and MSI installer"
