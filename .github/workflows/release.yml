@@ -25,7 +25,7 @@ jobs:
             cargo build --release --package harbor-tray
       
       - name: Build MSI
-        run: cargo wix --package harbor-tray --nocapture
+        run: cargo wix --package harbor-tray --nocapture --no-build
       
       - name: Prepare separate executables
         run: |
