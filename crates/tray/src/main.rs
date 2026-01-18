@@ -11,8 +11,53 @@ use std::sync::{
     Arc, Mutex,
 };
 use std::thread;
+use windows::{
+    core::PCWSTR,
+    Win32::Foundation::*,
+    Win32::System::Threading::*,
+};
 
 extern crate native_windows_gui as nwg;
+
+// Single instance checker using Windows mutex
+struct SingleInstance {
+    _mutex_handle: HANDLE,
+}
+
+impl SingleInstance {
+    fn new(name: &str) -> Result<Self> {
+        unsafe {
+            let mutex_name = format!("Global\\{}", name);
+            let wide_name: Vec<u16> = mutex_name.encode_utf16().chain(std::iter::once(0)).collect();
+            
+            let mutex_handle = CreateMutexW(
+                None,
+                true, // Initially owned
+                PCWSTR(wide_name.as_ptr()),
+            )?;
+            
+            // Check if mutex already existed
+            let last_error = GetLastError();
+            if last_error.0 == ERROR_ALREADY_EXISTS.0 {
+                // Another instance is running
+                let _ = CloseHandle(mutex_handle);
+                anyhow::bail!("Another instance of Harbor is already running");
+            }
+            
+            Ok(Self {
+                _mutex_handle: mutex_handle,
+            })
+        }
+    }
+}
+
+impl Drop for SingleInstance {
+    fn drop(&mut self) {
+        unsafe {
+            let _ = CloseHandle(self._mutex_handle);
+        }
+    }
+}
 
 struct TrayState {
     window: nwg::MessageWindow,
@@ -116,6 +161,9 @@ fn append_recent(actions: &[(PathBuf, PathBuf, String, Option<String>)]) {
 }
 
 fn main() -> Result<()> {
+    // Ensure only one instance of Harbor is running
+    let _instance = SingleInstance::new("Harbor-Tray-Instance")?;
+    
     nwg::init()?;
 
     let cfg_path = local_appdata_harbor().join("harbor.downloads.yaml");
