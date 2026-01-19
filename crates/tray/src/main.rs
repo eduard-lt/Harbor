@@ -167,6 +167,16 @@ fn main() -> Result<()> {
     nwg::init()?;
 
     let cfg_path = local_appdata_harbor().join("harbor.downloads.yaml");
+    
+    // If config doesn't exist, try to copy from default template
+    if !cfg_path.exists() {
+        let default_config = local_appdata_harbor().join("harbor.downloads.yaml.default");
+        if default_config.exists() {
+            // Copy the default config to the active config
+            let _ = std::fs::copy(&default_config, &cfg_path);
+        }
+    }
+    
     let cfg = if cfg_path.exists() {
         load_downloads_config(&cfg_path)?
     } else {
