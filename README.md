@@ -1,205 +1,373 @@
-⚓ Harbor
+<div align="center">
 
-Version: 0.5.0
+# ⚓ Harbor
 
-Harbor is a lightweight Windows utility that keeps your Downloads folder tidy. It watches for stable files and moves them into organized folders based on extensions and simple patterns. A tray app provides quick control and feedback; a CLI helps with power‑user workflows.
+**Keep your Downloads folder organized, automatically.**
 
-Features
+![Harbor Logo](assets/harbor_h.png)
 
-- Tray app with Start/Stop, Organize Now, Open Downloads/Config/Recent Moves
-- Startup registration without admin (`HKCU\Software\Microsoft\Windows\CurrentVersion\Run`)
-- Checkmarks on Start/Stop indicate current watching state
-- Safe moves: ignores partial files (`.crdownload`, `.part`, `.tmp`, `.download`)
-- Conflict-free renames: appends `(n)` when the destination exists
-- Simple YAML config with `%ENV%` expansion like `%USERPROFILE%`
-- Recent actions log under `%LOCALAPPDATA%\Harbor\recent_moves.log`
-- **Smart Symlinks**: Optionally leave a shortcut behind so browsers don't "lose" the file.
-  - Shortcuts are **hidden** to keep your folder clean.
-  - **Auto-Cleanup**: Old shortcuts are automatically removed when Harbor restarts.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Windows](https://img.shields.io/badge/platform-Windows-blue.svg)](https://github.com/Eduard2609/Harbor/releases)
+[![GitHub release](https://img.shields.io/github/v/release/Eduard2609/Harbor)](https://github.com/Eduard2609/Harbor/releases/latest)
 
-Installation
+[Features](#-features) •
+[Installation](#-installation) •
+[Configuration](#️-configuration) •
+[Building](#-building-from-source) •
+[Support](#-support)
 
-### From Release (Recommended)
-1.  Go to the [Releases](https://github.com/Eduard2609/Harbor/releases) page.
-2.  Download the latest `.msi` installer (e.g., `harbor-tray-0.5.0-x86_64.msi`).
-3.  Run the installer. Harbor will automatically start and be added to your system tray.
+</div>
 
-## Building from Source
+---
+
+## 🎯 What is Harbor?
+
+Harbor is a lightweight Windows utility that automatically organizes your Downloads folder. No more manually sorting files - Harbor watches your downloads and moves them to the right folders based on file type, keeping everything tidy without you lifting a finger.
+
+### How It Works
+
+1. **Monitors Your Downloads** - Runs quietly in your system tray
+2. **Detects New Files** - Waits for files to finish downloading (no partial files!)
+3. **Organizes Automatically** - Moves files to categorized folders based on extension
+4. **Stays Out of Your Way** - Minimal UI, maximum efficiency
+
+Perfect for anyone tired of digging through a cluttered Downloads folder!
+
+---
+
+## ✨ Features
+
+- **🔄 Auto-Organization** - Automatically sorts downloads by file type (images, videos, documents, etc.)
+- **🎛️ Simple Tray Interface** - Start/Stop watching, organize now, or access recent activity
+- **⚡ No Admin Required** - Installs and runs with user permissions only
+- **🔗 Smart Symlinks** - Optionally leave hidden shortcuts so your browser doesn't "lose" files
+- **📝 Activity Log** - Track what was moved and when in `recent_moves.log`
+- **⚙️ Customizable Rules** - Edit the YAML config to create your own organization rules
+- **🚀 Auto-Start** - Launches automatically on Windows startup
+- **💾 Safe Moves** - Avoids partial downloads (.crdownload, .part, .tmp)
+- **🔄 Conflict Handling** - Automatically renames files if destination already exists
+
+---
+
+## 📦 Installation
+
+### Option 1: MSI Installer (Recommended)
+
+1. Download the latest `.msi` installer from the [Releases page](https://github.com/Eduard2609/Harbor/releases)
+2. Run `harbor-tray-x.x.x-x86_64.msi`
+3. Harbor automatically starts and adds itself to your system tray
+4. That's it! Your downloads will now be organized automatically
+
+### Option 2: Portable Executables
+
+1. Download `harbor-tray.exe` and `harbor-cli.exe` from [Releases](https://github.com/Eduard2609/Harbor/releases)
+2. Place them in a folder of your choice
+3. Run `harbor-tray.exe` to start the tray application
+4. (Optional) Use `harbor-cli.exe` for command-line operations
+
+### What Gets Installed?
+
+Files are installed to `%LOCALAPPDATA%\Harbor\`:
+- `harbor-tray.exe` - System tray application
+- `harbor-cli.exe` - Command-line interface
+- `harbor.downloads.yaml.default` - Template configuration
+- `harbor.downloads.yaml` - Your active configuration (auto-created)
+- Icons and activity logs
+
+---
+
+## 🎮 Using Harbor
+
+### System Tray Menu
+
+Right-click the Harbor icon in your system tray:
+
+- **Start/Stop Watching** - Toggle automatic organization
+- **Organize Now** - Manually organize downloads immediately  
+- **Open Downloads** - Open your Downloads folder
+- **Open Config** - Edit your organization rules
+- **Open Recent Moves** - View the activity log
+- **Exit** - Close Harbor
+
+### Command Line Interface
+
+Harbor also includes a CLI for power users:
+
+```powershell
+# Organize downloads once
+harbor-cli downloads-organize
+
+# Watch for new downloads (runs continuously)
+harbor-cli downloads-watch --interval-secs 5
+
+# Install tray app to startup
+harbor-cli tray-install
+
+# Remove from startup
+harbor-cli tray-uninstall
+```
+
+---
+
+## ⚙️ Configuration
+
+Harbor uses a simple YAML configuration file located at:
+```
+%LOCALAPPDATA%\Harbor\harbor.downloads.yaml
+```
+
+### Default Organization Rules
+
+By default, Harbor organizes files into these categories:
+
+| Category | File Types | Destination |
+|----------|-----------|-------------|
+| 📸 Images | jpg, png, gif, webp, svg, etc. | `Downloads\Images` |
+| 🎬 Videos | mp4, mkv, avi, mov, webm | `Downloads\Videos` |
+| 🎵 Music | mp3, flac, wav, aac, ogg | `Downloads\Music` |
+| 📄 Documents | pdf, docx, xlsx, txt, etc. | `Downloads\Documents` |
+| 📦 Archives | zip, rar, 7z, tar, gz | `Downloads\Archives` |
+| ⚙️ Installers | exe, msi, apk, dmg | `Downloads\Installers` |
+| 💿 ISOs | iso | `Downloads\ISOs` |
+| 🧲 Torrents | torrent | `Downloads\Torrents` |
+| 🌐 Web Pages | html, htm | `Downloads\Webpages` |
+| 💻 Dev Files | json, xml, env | `Downloads\Dev` |
+| 📊 Subtitles | srt | `Downloads\Subtitles` |
+
+### Customizing Rules
+
+Edit `harbor.downloads.yaml` to customize your organization:
+
+```yaml
+download_dir: "%USERPROFILE%\\Downloads"
+min_age_secs: 5  # Wait 5 seconds before organizing (ensures download is complete)
+
+rules:
+  - name: Screenshots
+    extensions: ["png", "jpg"]
+    pattern: "^(Screenshot|screen)"  # Regex pattern for filenames
+    target_dir: "%USERPROFILE%\\Pictures\\Screenshots"
+    create_symlink: false  # Set to true to leave a shortcut behind
+    
+  - name: Work Documents
+    extensions: ["pdf", "docx"]
+    pattern: "work|invoice|contract"
+    min_size_bytes: 1024  # Only files larger than 1KB
+    target_dir: "%USERPROFILE%\\Documents\\Work"
+```
+
+**Configuration Options:**
+- `extensions` - List of file extensions to match
+- `pattern` - Optional regex pattern for filename matching
+- `min_size_bytes` / `max_size_bytes` - Optional size filters
+- `target_dir` - Destination folder (supports `%USERPROFILE%`, `%USERNAME%`, etc.)
+- `create_symlink` - Leave a hidden shortcut in Downloads (requires Developer Mode)
+
+---
+
+## 🛠️ Building from Source
+
+Want to build Harbor yourself? Here's how!
 
 ### Prerequisites
-- [Rust](https://rustup.rs/) (latest stable)
-- [WiX Toolset v3](https://github.com/wixtoolset/wix3/releases) (for MSI installer)
 
-### Using Poe the Poet (Recommended for Devs)
-We use `poe` to manage development tasks.
+1. **Install Rust** (latest stable)
+   ```powershell
+   # Visit https://rustup.rs/ or run:
+   winget install Rustlang.Rustup
+   ```
 
-1.  **Install Poe**:
-    ```powershell
-    uv tool install poethepoet
-    # OR
-    pip install poethepoet
-    ```
+2. **Install WiX Toolset v3** (for MSI installer)
+   ```powershell
+   winget install WiXToolset.WiXToolset
+   ```
 
-2.  **Setup dependencies**:
-    ```powershell
-    poe setup-wix
-    ```
-    *(Requires Administrator privileges to install WiX via winget)*
+3. **Install cargo-wix**
+   ```powershell
+   cargo install cargo-wix
+   ```
 
-3.  **Build MSI**:
-    ```powershell
-    poe msi
-    ```
-    The installer will be generated in `target/wix/`.
+### Build Steps
 
-4.  **Run Tests**:
-    ```powershell
-    poe test
-    ```
+#### Quick Build (Executables Only)
 
-### Manual Build
-If you prefer standard Cargo commands:
+```powershell
+# Clone the repository
+git clone https://github.com/Eduard2609/Harbor.git
+cd Harbor
 
-1.  **Build Binaries**:
-    ```powershell
-    cargo build --release
-    ```
+# Build release binaries
+cargo build --release --package harbor-cli
+cargo build --release --package harbor-tray
 
-2.  **Build MSI Installer**:
-    ```powershell
-    cargo install cargo-wix
-    cargo wix --package harbor-tray
-    ```
+# Executables are in: target\release\
+```
 
-Tray Menu
+#### Build MSI Installer
 
-- `Start Watching` / `Stop Watching`: toggles the background organizer
-- `Organize Now`: runs a one-time pass immediately
-- `Open Downloads`: opens the configured downloads directory
-- `Open Config`: opens `%LOCALAPPDATA%\Harbor\harbor.downloads.yaml` if present
-- `Open Recent Moves`: opens `%LOCALAPPDATA%\Harbor\recent_moves.log`
-- `Exit`: closes the tray app
+```powershell
+# Build binaries first
+cargo build --release --package harbor-cli
+cargo build --release --package harbor-tray
 
-CLI
+# Create MSI installer
+cargo wix --package harbor-tray --nocapture --no-build
 
-- `harbor-cli tray-install` — copy tray binary to `%LOCALAPPDATA%\Harbor` and register startup
-- `harbor-cli tray-uninstall` — remove startup registry entry
-- `harbor-cli downloads-init PATH` — write a starter downloads YAML (optional)
-- `harbor-cli downloads-organize PATH` — run once and print moves
-- `harbor-cli downloads-watch PATH --interval-secs 5` — watch via CLI
+# MSI is created at: target\wix\harbor-tray-x.x.x-x86_64.msi
+```
 
-Configuration
+#### Using Poe the Poet (Development)
 
-- Location:
-  - `%LOCALAPPDATA%\Harbor\harbor.downloads.yaml` is preferred
-  - If missing, Harbor uses built‑in defaults and still runs
-- Format:
-  ```yaml
-  download_dir: "%USERPROFILE%\\Downloads"
-  min_age_secs: 5
-  rules:
-    - name: Images
-      extensions: ["jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "heic", "svg"]
-      target_dir: "%USERPROFILE%\\Downloads\\Images"
-      create_symlink: true
-    - name: Videos
-      extensions: ["mp4", "mkv", "avi", "mov", "wmv", "webm"]
-      target_dir: "%USERPROFILE%\\Downloads\\Videos"
-    - name: Music
-      extensions: ["mp3", "flac", "wav", "aac", "ogg"]
-      target_dir: "%USERPROFILE%\\Downloads\\Music"
-    - name: Archives
-      extensions: ["zip", "rar", "7z", "tar", "gz", "xz"]
-      target_dir: "%USERPROFILE%\\Downloads\\Archives"
-    - name: Installers
-      extensions: ["exe", "msi", "msix", "dmg", "pkg", "apk"]
-      target_dir: "%USERPROFILE%\\Downloads\\Installers"
-    - name: Documents
-      extensions: ["pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "rtf"]
-      target_dir: "%USERPROFILE%\\Downloads\\Documents"
-  ```
-- Rule options:
-  - `extensions`: list of case‑insensitive extensions
-  - `pattern`: optional regex applied to file name
-  - `min_size_bytes` / `max_size_bytes`: optional size filters
-  - `target_dir`: destination folder (supports `%ENV%` expansion)
-  - `create_symlink`: optional boolean (default `false`). If `true`, leaves a symbolic link in the download folder pointing to the moved file.
-    - **Hidden**: The link is marked as hidden to avoid clutter.
-    - **Requirements**: Requires **Developer Mode** enabled in Windows Settings (or running as Admin).
-  - `min_age_secs`: global stability delay before moving
+For contributors, we use `poe` to manage tasks:
 
-Defaults
+```powershell
+# Install poe
+pip install poethepoet
 
-- If no config file is found, Harbor uses sensible defaults targeting subfolders inside `Downloads`:
-  - `Downloads\Images`, `Videos`, `Music`, `Documents`
-  - `Downloads\Archives`, `Installers`, `ISOs`, `Torrents`, `Webpages`, `Dev`, `Subtitles`
+# Setup WiX (requires admin)
+poe setup-wix
 
-Startup
+# Build MSI
+poe msi
 
-- Uses `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` (per‑user, no admin)
-- Path is quoted to handle spaces
-- Tray binary is built without a console window
+# Run tests
+poe test
+```
 
-Troubleshooting
+### Local Testing
 
-- **Symlinks not created**:
-  - Check `recent_moves.log` for "Symlink failed".
-  - Ensure **Developer Mode** is on (Settings → Update & Security → For developers).
-- Tray doesn’t start at login:
-  - Remove old entries in Task Manager → Startup, then run `harbor-cli tray-install`
-- Files not moving:
-  - Check `min_age_secs`; large files may need more time to settle
-  - Verify extensions and destination folders exist
+Use the included script to quickly update your local installation:
 
-Development
+```powershell
+.\tools\update-local-install.ps1
+```
 
-- Build: `cargo build --release -p harbor-tray -p harbor-cli`
-- Tests: `cargo test -p harbor-core`
-- Run CLI organize: `harbor-cli downloads-organize harbor.downloads.yaml`
+This will:
+1. Build release binaries
+2. Stop any running Harbor instance
+3. Copy files to `%LOCALAPPDATA%\Harbor`
+4. Show version info
 
-Status
+---
 
-- Platforms
-  - Windows: Ready (tray, CLI, icons, startup, MSI installer).
-  - Linux: Partial (CLI/core organize and symlinks; no tray; no autostart; no installer).
-  - macOS: Partial/untested (CLI/core likely work; no tray; no installer).
-- Icons: Yes (tray loads `icon_h.ico` → `harbor-tray.ico` → `harbor.ico`).
-- UI: Minimal tray menu; no full UI for rules editing or log viewing.
-- Installer: Ready (Windows MSI).
-- Stability: Unit tests for core organizing, renaming, rule matching, env expansion, symlink cleanup.
-- Symlinks: Optional, hidden in Downloads, auto-cleanup on startup.
+## 🔧 Troubleshooting
 
-Roadmap / TODO
+### Symlinks Not Working
 
-- UI
-  - Build a cross‑platform UI to edit rules (create/update/delete, validate).
-  - Add a log viewer with filters and search (no raw text file).
-  - Provide “Organize preview” showing proposed moves before applying.
-- Platform Support
-  - Linux tray integration (e.g., via system tray APIs; autostart).
-  - macOS menu bar app; basic autostart integration.
-  - Cross‑platform packaging: Windows MSI/Winget, Linux AppImage/.deb, macOS pkg/Homebrew.
-- Installer
-  - [x] Windows MSI with proper shortcuts and uninstall.
-  - Optional: settings migration and “reset to defaults”.
-- Config & Rules
-  - Built‑in starter templates per platform.
-  - Rule import/export; validation with helpful error messages.
-  - More rule types: file name patterns, size/date conditions, directories.
-- Observability
-  - Structured logs (JSON) and summaries; rolling retention.
-  - Health indicators and alerts for failed moves or permission issues.
-- Performance
-  - Optional event‑based watching (OS FS events) with fallbacks to polling.
-  - Batch moves with rate limiting and backoff for large downloads.
-- Testing & CI
-  - Integration tests around organize flows with symlinks on Windows/Linux.
-  - CI matrix for Windows/Linux/macOS builds (macOS limited to CLI/core).
-- UX & Polish
-  - Tray icon states (active/inactive/error).
-  - Notifications with more context and quick actions.
-  - Internationalization of UI strings.
+**Problem:** Files are moved but symlinks aren't created
 
-License
+**Solution:**
+1. Enable **Developer Mode** in Windows:
+   - Settings → System → For developers → Developer Mode: ON
+2. Or run Harbor as Administrator (not recommended)
+3. Check `recent_moves.log` for symlink errors
 
-MIT © Eduard Olteanu
+### App Doesn't Start at Login
+
+**Problem:** Harbor doesn't auto-start after reboot
+
+**Solution:**
+1. Check Task Manager → Startup tab
+2. Run: `harbor-cli tray-install`
+3. Verify registry entry exists:
+   ```
+   HKCU\Software\Microsoft\Windows\CurrentVersion\Run\HarborTray
+   ```
+
+### Files Not Being Organized
+
+**Problem:** Downloaded files aren't being moved
+
+**Checklist:**
+- ✅ Is Harbor running? (Check system tray)
+- ✅ Is watching enabled? (Right-click tray icon → Start Watching)
+- ✅ Check `min_age_secs` - large files need time to fully download
+- ✅ Verify file extension matches a rule in your config
+- ✅ Ensure destination folders exist or can be created
+
+### Multiple Instances Error
+
+**Problem:** "Another instance of Harbor is already running"
+
+**Solution:**
+1. Open Task Manager (Ctrl+Shift+Esc)
+2. Find and end `harbor-tray.exe`
+3. Restart Harbor
+
+---
+
+## 📝 License
+
+Harbor is released under the **MIT License**. See [LICENSE](LICENSE) for details.
+
+This means you're free to:
+- ✅ Use Harbor commercially
+- ✅ Modify the source code
+- ✅ Distribute copies
+- ✅ Use it privately
+
+The only requirement is including the original copyright notice.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Whether it's:
+- 🐛 Bug reports
+- 💡 Feature suggestions  
+- 📖 Documentation improvements
+- 🔧 Code contributions
+
+Please feel free to open an issue or submit a pull request!
+
+---
+
+## 🗺️ Roadmap
+
+### In Progress
+- [ ] Cross-platform support (Linux, macOS)
+- [ ] GUI for editing rules without editing YAML
+- [ ] Log viewer with search and filters
+- [ ] File organization preview before moving
+
+### Planned Features
+- [ ] Rule templates for common scenarios
+- [ ] Scheduled organization times
+- [ ] Network drive support
+- [ ] Multiple download folder monitoring
+- [ ] Custom notification settings
+
+---
+
+## 💬 Support
+
+Need help or have questions?
+
+- 📖 Check the [Documentation](#-configuration)
+- 🐛 Report bugs via [GitHub Issues](https://github.com/Eduard2609/Harbor/issues)
+- 💡 Request features via [GitHub Issues](https://github.com/Eduard2609/Harbor/issues)
+- ⭐ Star the project if you find it useful!
+
+---
+
+## ☕ Support Development
+
+If Harbor has made your life easier, consider buying me a coffee! Your support helps maintain and improve the project.
+
+<div align="center">
+
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-support-yellow?style=for-the-badge&logo=buy-me-a-coffee)](https://buymeacoffee.com/yourusername)
+
+*Every coffee helps keep Harbor sailing! ⚓*
+
+</div>
+
+---
+
+<div align="center">
+
+Made with ❤️ by Eduard Olteanu
+
+[⬆ Back to Top](#-harbor)
+
+</div>
