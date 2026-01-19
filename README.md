@@ -4,7 +4,7 @@
 
 **Keep your Downloads folder organized, automatically.**
 
-![Harbor Logo](assets/harbor_h.png)
+<img src="assets/harbor_h.png" alt="Harbor Logo" width="400">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Windows](https://img.shields.io/badge/platform-Windows-blue.svg)](https://github.com/Eduard2609/Harbor/releases)
@@ -356,7 +356,7 @@ If Harbor has made your life easier, consider buying me a coffee! Your support h
 
 <div align="center">
 
-[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-support-yellow?style=for-the-badge&logo=buy-me-a-coffee)](https://buymeacoffee.com/yourusername)
+[![Buy Me A Coffee](https://shields.io/badge/kofi-Buy_a_coffee-ff5f5f?logo=ko-fi&style=for-the-badge)](https://ko-fi.com/eduardolteanu)
 
 *Every coffee helps keep Harbor sailing! ⚓*
 
