@@ -3,33 +3,190 @@ name = "harbor"
 version = "0.6.0"
 description = "Harbor specific tasks"
 
-[tool.poe.tasks]
-build = "cargo build --release"
-test = "cargo test"
-clean = "cargo clean"
-setup-wix = "winget install --id=WiXToolset.WiXToolset -e --accept-source-agreements --accept-package-agreements"
-msi = "cargo wix --package harbor-tray --nocapture --no-build"
+# ============================================================================
+# BUILD TASKS
+# ============================================================================
+
+[tool.poe.tasks.build]
+help = "Build release binaries"
+cmd = "cargo build --release"
+
+[tool.poe.tasks.build-debug]
+help = "Build debug binaries"
+cmd = "cargo build"
+
+[tool.poe.tasks.clean]
+help = "Remove build artifacts"
+cmd = "cargo clean"
+
+# ============================================================================
+# CODE QUALITY TASKS
+# ============================================================================
+
+[tool.poe.tasks.fmt]
+help = "Format code with rustfmt"
+cmd = "cargo fmt --all"
+
+[tool.poe.tasks.fmt-check]
+help = "Check code formatting without modifying files"
+cmd = "cargo fmt --all -- --check"
+
+[tool.poe.tasks.clippy]
+help = "Run clippy linter with warnings as errors"
+cmd = "cargo clippy --all-targets --all-features -- -D warnings"
+
+[tool.poe.tasks.clippy-fix]
+help = "Automatically fix clippy warnings"
+cmd = "cargo clippy --all-targets --all-features --fix --allow-dirty"
+
+[tool.poe.tasks.check]
+help = "Run all code quality checks (fmt, clippy, test)"
+sequence = ["fmt-check", "clippy", "test"]
+
+# ============================================================================
+# TESTING TASKS
+# ============================================================================
+
+[tool.poe.tasks.test]
+help = "Run all tests"
+cmd = "cargo test --all"
+
+[tool.poe.tasks.test-unit]
+help = "Run unit tests only"
+cmd = "cargo test --lib"
+
+[tool.poe.tasks.test-integration]
+help = "Run integration tests only"
+cmd = "cargo test --test '*'"
+
+[tool.poe.tasks.test-core]
+help = "Run tests for core crate only"
+cmd = "cargo test -p harbor-core"
+
+[tool.poe.tasks.test-verbose]
+help = "Run tests with verbose output"
+cmd = "cargo test --all -- --nocapture --test-threads=1"
+
+[tool.poe.tasks.test-watch]
+help = "Watch for changes and run tests automatically"
+cmd = "cargo watch -x test"
+
+# ============================================================================
+# DOCUMENTATION TASKS
+# ============================================================================
+
+[tool.poe.tasks.doc]
+help = "Generate and open documentation"
+cmd = "cargo doc --open --no-deps"
+
+[tool.poe.tasks.doc-all]
+help = "Generate documentation with dependencies"
+cmd = "cargo doc --open"
+
+# ============================================================================
+# DEVELOPMENT TASKS
+# ============================================================================
+
+[tool.poe.tasks.dev]
+help = "Build and install locally for development testing"
+sequence = ["build", "update-local"]
+
+[tool.poe.tasks.dev-debug]
+help = "Build debug version and install locally"
+sequence = ["build-debug", "update-local"]
 
 [tool.poe.tasks.update-local]
 help = "Copy built binaries to local install location for testing"
 cmd = "powershell -ExecutionPolicy Bypass -File tools/update-local-install.ps1"
 
+[tool.poe.tasks.watch]
+help = "Watch for changes and rebuild"
+cmd = "cargo watch -x build"
+
+[tool.poe.tasks.watch-run]
+help = "Watch for changes, rebuild, and run"
+cmd = "cargo watch -x 'run --package harbor-cli'"
+
+# ============================================================================
+# INSTALLER TASKS
+# ============================================================================
+
+[tool.poe.tasks.setup-wix]
+help = "Install WiX Toolset (requires admin)"
+cmd = "winget install --id=WiXToolset.WiXToolset -e --accept-source-agreements --accept-package-agreements"
+
+[tool.poe.tasks.msi]
+help = "Build MSI installer (requires prior build)"
+cmd = "cargo wix --package harbor-tray --nocapture --no-build"
+
 [tool.poe.tasks.release]
-sequence = ["build", "msi"]
 help = "Build release binaries and MSI installer"
+sequence = ["build", "msi"]
+
+[tool.poe.tasks.release-check]
+help = "Validate release readiness (checks + build + msi)"
+sequence = ["check", "build", "msi"]
+
+# ============================================================================
+# VERSION MANAGEMENT TASKS
+# ============================================================================
 
 [tool.poe.tasks.version]
 help = "Show current version"
 cmd = "powershell -ExecutionPolicy Bypass -File tools/version.ps1 show"
 
 [tool.poe.tasks.bump-patch]
-help = "Bump patch version (0.5.1 -> 0.5.2)"
+help = "Bump patch version (0.6.0 -> 0.6.1)"
 cmd = "powershell -ExecutionPolicy Bypass -File tools/version.ps1 bump-patch"
 
 [tool.poe.tasks.bump-minor]
-help = "Bump minor version (0.5.1 -> 0.6.0)"
+help = "Bump minor version (0.6.0 -> 0.7.0)"
 cmd = "powershell -ExecutionPolicy Bypass -File tools/version.ps1 bump-minor"
 
 [tool.poe.tasks.bump-major]
-help = "Bump major version (0.5.1 -> 1.0.0)"
+help = "Bump major version (0.6.0 -> 1.0.0)"
 cmd = "powershell -ExecutionPolicy Bypass -File tools/version.ps1 bump-major"
+
+# ============================================================================
+# DEPENDENCY MANAGEMENT
+# ============================================================================
+
+[tool.poe.tasks.deps-update]
+help = "Update dependencies"
+cmd = "cargo update"
+
+[tool.poe.tasks.deps-outdated]
+help = "Check for outdated dependencies (requires cargo-outdated)"
+cmd = "cargo outdated"
+
+[tool.poe.tasks.deps-tree]
+help = "Show dependency tree"
+cmd = "cargo tree"
+
+# ============================================================================
+# UTILITY TASKS
+# ============================================================================
+
+[tool.poe.tasks.install-dev-tools]
+help = "Install development tools (cargo-watch, cargo-outdated, etc.)"
+shell = """
+cargo install cargo-watch
+cargo install cargo-outdated
+echo "Development tools installed successfully!"
+"""
+
+[tool.poe.tasks.size]
+help = "Show binary sizes"
+shell = """
+if (Test-Path target/release/harbor-cli.exe) {
+    Write-Host "harbor-cli.exe: $((Get-Item target/release/harbor-cli.exe).Length / 1MB) MB"
+}
+if (Test-Path target/release/harbor-tray.exe) {
+    Write-Host "harbor-tray.exe: $((Get-Item target/release/harbor-tray.exe).Length / 1MB) MB"
+}
+"""
+interpreter = "powershell"
+
+[tool.poe.tasks.list]
+help = "List all available tasks"
+cmd = "poe"
