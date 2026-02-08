@@ -1,19 +1,91 @@
 download_dir: "C:\\Users\\%USERNAME%\\Downloads"
 min_age_secs: 5
 rules:
-  - name: images
-    extensions: ["jpg", "jpeg", "png", "gif", "webp"]
+  - name: Images
+    extensions:
+      - jpg
+      - jpeg
+      - png
+      - gif
+      - bmp
+      - webp
+      - tiff
+      - heic
+      - svg
+      - avif
     target_dir: "C:\\Users\\%USERNAME%\\Downloads\\Images"
-  - name: videos
-    extensions: ["mp4", "mov", "mkv", "avi"]
+  - name: Videos
+    extensions:
+      - mp4
+      - mkv
+      - avi
+      - mov
+      - wmv
+      - webm
     target_dir: "C:\\Users\\%USERNAME%\\Downloads\\Videos"
-  - name: archives
-    extensions: ["zip", "rar", "7z", "tar", "gz"]
+  - name: Music
+    extensions:
+      - mp3
+      - flac
+      - wav
+      - aac
+      - ogg
+    target_dir: "C:\\Users\\%USERNAME%\\Downloads\\Music"
+  - name: Archives
+    extensions:
+      - zip
+      - rar
+      - "7z"
+      - tar
+      - gz
+      - xz
     target_dir: "C:\\Users\\%USERNAME%\\Downloads\\Archives"
-  - name: docs
-    extensions: ["pdf", "docx", "xlsx", "pptx", "txt"]
+  - name: Documents
+    extensions:
+      - pdf
+      - doc
+      - docx
+      - xls
+      - xlsx
+      - ppt
+      - pptx
+      - txt
+      - rtf
     target_dir: "C:\\Users\\%USERNAME%\\Downloads\\Documents"
-  - name: installers
-    extensions: ["exe", "msi"]
+  - name: Installers
+    extensions:
+      - exe
+      - msi
+      - msix
+      - dmg
+      - pkg
+      - apk
     target_dir: "C:\\Users\\%USERNAME%\\Downloads\\Installers"
-
+  - name: ISOs
+    extensions:
+      - iso
+    target_dir: "C:\\Users\\%USERNAME%\\Downloads\\ISOs"
+  - name: Torrents
+    extensions:
+      - torrent
+    target_dir: "C:\\Users\\%USERNAME%\\Downloads\\Torrents"
+  - name: Dev
+    extensions:
+      - json
+      - env
+      - xml
+      - plist
+    target_dir: "C:\\Users\\%USERNAME%\\Downloads\\Dev"
+  - name: Data
+    extensions:
+      - csv
+    target_dir: "C:\\Users\\%USERNAME%\\Downloads\\Documents"
+  - name: Web Pages
+    extensions:
+      - html
+      - htm
+    target_dir: "C:\\Users\\%USERNAME%\\Downloads\\Webpages"
+  - name: Subtitles
+    extensions:
+      - srt
+    target_dir: "C:\\Users\\%USERNAME%\\Downloads\\Subtitles"

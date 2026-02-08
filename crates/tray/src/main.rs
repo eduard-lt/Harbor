@@ -87,10 +87,9 @@ fn start_watching(
     let cfg = cfg.clone();
     let w = watching.clone();
     let h = thread::spawn(move || {
-        let _ = watch_polling(&cfg, 5, |actions| {
+        let _ = watch_polling(&cfg, 5, &w, |actions| {
             append_recent(actions);
         });
-        w.store(false, Ordering::SeqCst);
     });
     let mut guard = handle.lock().unwrap();
     *guard = Some(h);

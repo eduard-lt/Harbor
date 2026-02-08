@@ -7,3 +7,4 @@ dist
 Cargo.lock
 logs
 harbor_state.json
+TASKS.md

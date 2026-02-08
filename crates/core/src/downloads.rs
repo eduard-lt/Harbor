@@ -220,11 +220,21 @@ pub fn organize_once(
 ///
 /// This runs `organize_once` in a loop, sleeping for `interval_secs` between iterations.
 /// When actions are taken, the `callback` is invoked with the list of actions.
-pub fn watch_polling<F>(cfg: &DownloadsConfig, interval_secs: u64, callback: F) -> Result<()>
+/// The function checks the `should_continue` flag on each iteration; when set to false, it exits.
+pub fn watch_polling<F>(
+    cfg: &DownloadsConfig,
+    interval_secs: u64,
+    should_continue: &std::sync::atomic::AtomicBool,
+    callback: F,
+) -> Result<()>
 where
     F: Fn(&[(PathBuf, PathBuf, String, Option<String>)]),
 {
+    use std::sync::atomic::Ordering;
     loop {
+        if !should_continue.load(Ordering::Relaxed) {
+            break;
+        }
         match organize_once(cfg) {
             Ok(actions) => {
                 if !actions.is_empty() {
@@ -235,6 +245,7 @@ where
         }
         thread::sleep(Duration::from_secs(interval_secs));
     }
+    Ok(())
 }
 
 fn expand_env(input: &str) -> String {
