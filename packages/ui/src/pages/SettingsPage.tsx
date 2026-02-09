@@ -1,0 +1,228 @@
+import { useState } from 'react';
+import { useTheme } from '../context/ThemeContext';
+import { Header } from '../components/Header';
+
+export function SettingsPage() {
+  const { theme, setTheme } = useTheme();
+  const [serviceEnabled, setServiceEnabled] = useState(true);
+  const [launchAtStartup, setLaunchAtStartup] = useState(true);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  return (
+    <>
+      <Header title="Settings" subtitle="Configure how Harbor manages your automated workflows and environment." />
+
+      <div className="flex-1 overflow-y-auto custom-scrollbar">
+        <div className="max-w-4xl mx-auto py-12 px-8">
+          <div className="space-y-8">
+            {/* Service Status */}
+            <section className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+              <div className="p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <span className={`inline-block w-2.5 h-2.5 rounded-full ${serviceEnabled ? 'bg-emerald-500' : 'bg-slate-400'}`}></span>
+                    <span className={`text-xs font-bold uppercase tracking-widest ${serviceEnabled ? 'text-emerald-600' : 'text-slate-500'}`}>
+                      {serviceEnabled ? 'Service is Running' : 'Service is Stopped'}
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-800 dark:text-white">Service Status</h3>
+                  <p className="text-slate-500 mt-1 max-w-md">
+                    Manage the background process that monitors your folders and organizes files in real-time.
+                  </p>
+                </div>
+                <div className="flex items-center">
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={serviceEnabled}
+                      onChange={() => setServiceEnabled(!serviceEnabled)}
+                    />
+                    <div className="w-14 h-8 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary shadow-inner"></div>
+                  </label>
+                </div>
+              </div>
+              <div className="px-8 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <span className="text-xs text-slate-500 uppercase tracking-tight font-semibold">
+                  Process ID: <span className="text-slate-800 dark:text-white font-mono ml-1">8291-HB</span>
+                </span>
+                <span className="text-xs text-slate-500 uppercase tracking-tight font-semibold">
+                  Uptime: <span className="text-slate-800 dark:text-white font-mono ml-1">14d 06h 22m</span>
+                </span>
+              </div>
+            </section>
+
+            {/* Appearance */}
+            <section>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center">
+                <span className="material-icons-round mr-2 text-primary">palette</span>
+                Appearance
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Light Theme */}
+                <div
+                  className="group cursor-pointer"
+                  onClick={() => setTheme('light')}
+                >
+                  <div
+                    className={`h-24 w-full bg-white rounded-lg border-2 transition-all flex flex-col overflow-hidden relative ${
+                      theme === 'light'
+                        ? 'border-primary shadow-[0_0_15px_rgba(14,155,148,0.1)]'
+                        : 'border-transparent hover:border-primary/50'
+                    }`}
+                  >
+                    <div className="h-4 bg-slate-100 w-full border-b border-slate-200"></div>
+                    <div className="p-2 space-y-1">
+                      <div className="h-2 w-3/4 bg-slate-200 rounded-full"></div>
+                      <div className="h-2 w-1/2 bg-slate-100 rounded-full"></div>
+                    </div>
+                    {theme === 'light' && (
+                      <div className="absolute top-2 right-2 bg-primary text-white rounded-full p-0.5">
+                        <span className="material-icons-round text-[14px]">done</span>
+                      </div>
+                    )}
+                    {theme !== 'light' && (
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+                        <span className="text-xs font-bold text-white">Select Light</span>
+                      </div>
+                    )}
+                  </div>
+                  <p className={`text-center mt-2 text-sm font-medium ${theme === 'light' ? 'font-bold text-primary' : 'text-slate-600'}`}>
+                    Light
+                  </p>
+                </div>
+
+                {/* Dark Theme */}
+                <div
+                  className="group cursor-pointer"
+                  onClick={() => setTheme('dark')}
+                >
+                  <div
+                    className={`h-24 w-full bg-slate-800 rounded-lg border-2 transition-all flex flex-col overflow-hidden relative ${
+                      theme === 'dark'
+                        ? 'border-primary shadow-[0_0_15px_rgba(14,155,148,0.1)]'
+                        : 'border-transparent hover:border-primary/50'
+                    }`}
+                  >
+                    <div className="h-4 bg-slate-900 w-full"></div>
+                    <div className="p-2 space-y-1">
+                      <div className="h-2 w-3/4 bg-slate-700 rounded-full"></div>
+                      <div className="h-2 w-1/2 bg-slate-800 rounded-full"></div>
+                    </div>
+                    {theme === 'dark' && (
+                      <div className="absolute top-2 right-2 bg-primary text-white rounded-full p-0.5">
+                        <span className="material-icons-round text-[14px]">done</span>
+                      </div>
+                    )}
+                    {theme !== 'dark' && (
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+                        <span className="text-xs font-bold text-white">Select Dark</span>
+                      </div>
+                    )}
+                  </div>
+                  <p className={`text-center mt-2 text-sm font-medium ${theme === 'dark' ? 'font-bold text-primary' : 'text-slate-600 dark:text-slate-400'}`}>
+                    Dark
+                  </p>
+                </div>
+
+                {/* System Theme */}
+                <div
+                  className="group cursor-pointer"
+                  onClick={() => setTheme('system')}
+                >
+                  <div
+                    className={`h-24 w-full bg-slate-100 rounded-lg border-2 transition-all flex overflow-hidden relative ${
+                      theme === 'system'
+                        ? 'border-primary shadow-[0_0_15px_rgba(14,155,148,0.1)]'
+                        : 'border-transparent hover:border-primary/50'
+                    }`}
+                  >
+                    <div className="w-1/2 bg-white h-full border-r border-slate-200"></div>
+                    <div className="w-1/2 bg-slate-900 h-full"></div>
+                    {theme === 'system' && (
+                      <div className="absolute top-2 right-2 bg-primary text-white rounded-full p-0.5">
+                        <span className="material-icons-round text-[14px]">done</span>
+                      </div>
+                    )}
+                    {theme !== 'system' && (
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+                        <span className="text-xs font-bold text-white">Select System</span>
+                      </div>
+                    )}
+                  </div>
+                  <p className={`text-center mt-2 text-sm font-medium ${theme === 'system' ? 'font-bold text-primary' : 'text-slate-600 dark:text-slate-400'}`}>
+                    System
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            {/* System Preferences */}
+            <section>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center">
+                <span className="material-icons-round mr-2 text-primary">laptop</span>
+                System Preferences
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800 dark:text-white">Launch at Startup</p>
+                    <p className="text-xs text-slate-500">Start Harbor when you log in.</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={launchAtStartup}
+                      onChange={() => setLaunchAtStartup(!launchAtStartup)}
+                    />
+                    <div className="w-10 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                  </label>
+                </div>
+                <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800 dark:text-white">Show notifications</p>
+                    <p className="text-xs text-slate-500">Notify on file operations.</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={showNotifications}
+                      onChange={() => setShowNotifications(!showNotifications)}
+                    />
+                    <div className="w-10 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                  </label>
+                </div>
+              </div>
+            </section>
+
+            {/* Factory Reset */}
+            <section className="mt-12 pt-8 border-t border-slate-200 dark:border-slate-800">
+              <div className="bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div>
+                  <h4 className="text-red-600 font-bold">Factory Reset</h4>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Permanently wipe all configuration data and restart the onboarding process. This action cannot be undone.
+                  </p>
+                </div>
+                <button className="px-6 py-2 border border-red-200 dark:border-red-800 bg-white dark:bg-transparent text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600 font-bold rounded-lg transition-all text-sm whitespace-nowrap">
+                  Reset All Settings
+                </button>
+              </div>
+            </section>
+          </div>
+
+          {/* Footer */}
+          <footer className="mt-20 flex items-center justify-between text-slate-400 text-xs">
+            <p>&copy; 2024 Harbor Utility. All rights reserved.</p>
+            <div className="flex space-x-4">
+              <a className="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+              <a className="hover:text-primary transition-colors" href="#">Terms of Service</a>
+            </div>
+          </footer>
+        </div>
+      </div>
+    </>
+  );
+}
