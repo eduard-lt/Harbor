@@ -24,6 +24,12 @@ pub struct Rule {
     pub max_size_bytes: Option<u64>,
     pub target_dir: String,
     pub create_symlink: Option<bool>,
+    #[serde(default = "default_enabled")]
+    pub enabled: Option<bool>,
+}
+
+fn default_enabled() -> Option<bool> {
+    Some(true)
 }
 
 /// Loads and parses the downloads configuration file.
@@ -169,6 +175,10 @@ pub fn organize_once(
         }
         let mut applied: Option<(&Rule, PathBuf)> = None;
         for rule in &cfg.rules {
+            // Skip disabled rules
+            if !rule.enabled.unwrap_or(true) {
+                continue;
+            }
             if matches_rule(&path, &meta, rule) {
                 let target_dir = PathBuf::from(&rule.target_dir);
                 ensure_dir(&target_dir)?;
@@ -366,6 +376,7 @@ mod tests {
             max_size_bytes: None,
             target_dir: "target".into(),
             create_symlink: None,
+            enabled: None,
         };
         assert!(matches_rule(&file_path, &meta, &rule_ext));
 
@@ -377,6 +388,7 @@ mod tests {
             max_size_bytes: None,
             target_dir: "target".into(),
             create_symlink: None,
+            enabled: None,
         };
         assert!(matches_rule(&file_path, &meta, &rule_pat));
 
@@ -388,6 +400,7 @@ mod tests {
             max_size_bytes: Some(10),
             target_dir: "target".into(),
             create_symlink: None,
+            enabled: None,
         };
         assert!(matches_rule(&file_path, &meta, &rule_size));
 
@@ -399,6 +412,7 @@ mod tests {
             max_size_bytes: None,
             target_dir: "target".into(),
             create_symlink: None,
+            enabled: None,
         };
         assert!(!matches_rule(&file_path, &meta, &rule_fail));
     }

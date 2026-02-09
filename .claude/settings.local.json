@@ -4,7 +4,10 @@
       "Bash(npm create vite@latest . -- --template react-ts --yes)",
       "Bash(npm install)",
       "Bash(npm install:*)",
-      "Bash(npm run build)"
+      "Bash(npm run build)",
+      "Bash(if exist src-tauri rmdir src-tauri)",
+      "Bash(mklink:*)",
+      "Bash(powershell -Command:*)"
     ]
   }
 }
