@@ -189,64 +189,35 @@ Want to build Harbor yourself? Here's how!
 
 ### Build Steps
 
-#### Quick Build (Executables Only)
+#### Prerequisites
+
+1.  **Node.js & npm** (Tested with Node 20+)
+2.  **Rust** (Latest stable)
+3.  **WiX Toolset v3** (for MSI installer)
+
+#### Build Order
+
+Harbor is a Tauri v2 app (React Frontend + Rust Backend).
 
 ```powershell
-# Clone the repository
-git clone https://github.com/Eduard2609/Harbor.git
-cd Harbor
+# 1. Install Frontend Dependencies
+cd packages/ui
+npm install
 
-# Build release binaries
-cargo build --release --package harbor-cli
-cargo build --release --package harbor-tray
+# 2. Build App (Frontend + Backend + Installer)
+npm run tauri:build
 
-# Executables are in: target\release\
-```
-
-#### Build MSI Installer
-
-```powershell
-# Build binaries first
-cargo build --release --package harbor-cli
-cargo build --release --package harbor-tray
-
-# Create MSI installer
-cargo wix --package harbor-tray --nocapture --no-build
-
-# MSI is created at: target\wix\harbor-tray-x.x.x-x86_64.msi
-```
-
-#### Using Poe the Poet (Development)
-
-For contributors, we use `poe` to manage tasks:
-
-```powershell
-# Install poe
-pip install poethepoet
-
-# Setup WiX (requires admin)
-poe setup-wix
-
-# Build MSI
-poe msi
-
-# Run tests
-poe test
+# Installer Location:
+# target/release/bundle/msi/Harbor_1.0.0_x64_en-US.msi
 ```
 
 ### Local Testing
 
-Use the included script to quickly update your local installation:
-
 ```powershell
-.\tools\update-local-install.ps1
+# Run in Development Mode (Hot Reload)
+cd packages/ui
+npm run tauri:dev
 ```
-
-This will:
-1. Build release binaries
-2. Stop any running Harbor instance
-3. Copy files to `%LOCALAPPDATA%\Harbor`
-4. Show version info
 
 ---
 
@@ -268,10 +239,9 @@ This will:
 
 **Solution:**
 1. Check Task Manager → Startup tab
-2. Run: `harbor-cli tray-install`
-3. Verify registry entry exists:
+2. Verify registry entry exists:
    ```
-   HKCU\Software\Microsoft\Windows\CurrentVersion\Run\HarborTray
+   HKCU\Software\Microsoft\Windows\CurrentVersion\Run\Harbor
    ```
 
 ### Files Not Being Organized
@@ -280,7 +250,7 @@ This will:
 
 **Checklist:**
 - ✅ Is Harbor running? (Check system tray)
-- ✅ Is watching enabled? (Right-click tray icon → Start Watching)
+- ✅ Is watching enabled? (Right-click tray icon → Service On)
 - ✅ Check `min_age_secs` - large files need time to fully download
 - ✅ Verify file extension matches a rule in your config
 - ✅ Ensure destination folders exist or can be created
@@ -290,9 +260,8 @@ This will:
 **Problem:** "Another instance of Harbor is already running"
 
 **Solution:**
-1. Open Task Manager (Ctrl+Shift+Esc)
-2. Find and end `harbor-tray.exe`
-3. Restart Harbor
+1. The app prevents multiple instances. It should focus the existing window.
+2. If stuck, check Task Manager for `Harbor.exe` and end it.
 
 ---
 
@@ -326,8 +295,8 @@ Please feel free to open an issue or submit a pull request!
 
 ### In Progress
 - [ ] Cross-platform support (Linux, macOS)
-- [ ] GUI for editing rules without editing YAML
-- [ ] Log viewer with search and filters
+- [x] GUI for editing rules without editing YAML (Settings Page)
+- [x] Log viewer with search and filters (Activity Page)
 - [ ] File organization preview before moving
 
 ### Planned Features
