@@ -32,20 +32,14 @@ jobs:
         working-directory: packages/ui
         run: npm run build
 
-      - name: Build all binaries
-        run: |
-            cargo build --release --package harbor-cli
-            cargo build --release --package harbor-tray
-      
       - name: Build Tauri App (MSI)
         working-directory: packages/ui
         run: npm run tauri:build
 
-      - name: Prepare separate executables
+      - name: Prepare Release Artifacts
         run: |
             New-Item -ItemType Directory -Force -Path dist
             Copy-Item target\release\bundle\msi\*.msi dist\
-            Copy-Item target\release\harbor-cli.exe dist\
       
       - name: Release
         uses: softprops/action-gh-release@v2
@@ -53,5 +47,4 @@ jobs:
         with:
           files: |
             dist/*.msi
-            dist/harbor-cli.exe
           fail_on_unmatched_files: true
