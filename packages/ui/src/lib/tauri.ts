@@ -78,6 +78,10 @@ export const getDownloadDir = async (): Promise<string> => {
     return await invoke('get_download_dir');
 };
 
+export async function resetToDefaults(): Promise<void> {
+    return invoke('reset_to_defaults');
+}
+
 // Activity
 export const getActivityLogs = async (limit?: number, offset?: number): Promise<ActivityLogsResponse> => {
     return await invoke('get_activity_logs', { limit, offset });

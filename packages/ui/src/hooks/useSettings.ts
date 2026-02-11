@@ -8,7 +8,8 @@ import {
     getStartupEnabled,
     setStartupEnabled as setStartupEnabledApi,
     getDownloadDir,
-    reloadConfig
+    reloadConfig,
+    resetToDefaults
 } from '../lib/tauri';
 
 export function useSettings() {
@@ -97,6 +98,16 @@ export function useSettings() {
         }
     }
 
+    const reset = async () => {
+        try {
+            await resetToDefaults();
+            await fetchStatus();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : String(err));
+            throw err;
+        }
+    }
+
     return {
         serviceStatus,
         startupEnabled,
@@ -108,6 +119,7 @@ export function useSettings() {
         toggleStartup,
         organizeNow,
         reload,
+        reset,
         refresh: fetchStatus,
     };
 }

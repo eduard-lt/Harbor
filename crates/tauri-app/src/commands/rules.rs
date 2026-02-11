@@ -1,6 +1,6 @@
 use crate::commands::settings::{internal_start_service, internal_stop_service};
 use crate::state::AppState;
-use harbor_core::downloads::{load_downloads_config, DownloadsConfig};
+use harbor_core::downloads::DownloadsConfig;
 use harbor_core::types::Rule;
 
 use serde::{Deserialize, Serialize};

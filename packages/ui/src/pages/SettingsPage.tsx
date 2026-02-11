@@ -1,6 +1,8 @@
 import { useTheme } from '../context/ThemeContext';
 import { Header } from '../components/Header';
 import { useSettings } from '../hooks/useSettings';
+import { useState } from 'react';
+import { ConfirmationModal } from '../components/ConfirmationModal';
 
 export function SettingsPage() {
   const { theme, setTheme } = useTheme();
@@ -11,8 +13,25 @@ export function SettingsPage() {
     error,
     toggleService,
     toggleStartup,
-    reload
+    reload,
+    reset,
   } = useSettings();
+
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+
+  const handleReload = async () => {
+    await reload();
+    setFeedbackMessage('Configuration reloaded successfully.');
+    setTimeout(() => setFeedbackMessage(null), 3000);
+  };
+
+  const handleReset = async () => {
+    await reset();
+    setShowResetModal(false);
+    setFeedbackMessage('Settings have been reset to defaults.');
+    setTimeout(() => setFeedbackMessage(null), 3000);
+  };
 
   const serviceEnabled = serviceStatus.running;
 
@@ -81,8 +100,8 @@ export function SettingsPage() {
                 >
                   <div
                     className={`h-24 w-full bg-white rounded-lg border-2 transition-all flex flex-col overflow-hidden relative ${theme === 'light'
-                        ? 'border-primary shadow-[0_0_15px_rgba(14,155,148,0.1)]'
-                        : 'border-transparent hover:border-primary/50'
+                      ? 'border-primary shadow-[0_0_15px_rgba(14,155,148,0.1)]'
+                      : 'border-transparent hover:border-primary/50'
                       }`}
                   >
                     <div className="h-4 bg-slate-100 w-full border-b border-slate-200"></div>
@@ -113,8 +132,8 @@ export function SettingsPage() {
                 >
                   <div
                     className={`h-24 w-full bg-slate-800 rounded-lg border-2 transition-all flex flex-col overflow-hidden relative ${theme === 'dark'
-                        ? 'border-primary shadow-[0_0_15px_rgba(14,155,148,0.1)]'
-                        : 'border-transparent hover:border-primary/50'
+                      ? 'border-primary shadow-[0_0_15px_rgba(14,155,148,0.1)]'
+                      : 'border-transparent hover:border-primary/50'
                       }`}
                   >
                     <div className="h-4 bg-slate-900 w-full"></div>
@@ -145,8 +164,8 @@ export function SettingsPage() {
                 >
                   <div
                     className={`h-24 w-full bg-slate-100 rounded-lg border-2 transition-all flex overflow-hidden relative ${theme === 'system'
-                        ? 'border-primary shadow-[0_0_15px_rgba(14,155,148,0.1)]'
-                        : 'border-transparent hover:border-primary/50'
+                      ? 'border-primary shadow-[0_0_15px_rgba(14,155,148,0.1)]'
+                      : 'border-transparent hover:border-primary/50'
                       }`}
                   >
                     <div className="w-1/2 bg-white h-full border-r border-slate-200"></div>
@@ -198,7 +217,7 @@ export function SettingsPage() {
                     <p className="text-xs text-slate-500">Force reload configuration from disk.</p>
                   </div>
                   <button
-                    onClick={() => reload()}
+                    onClick={handleReload}
                     className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-medium transition-colors"
                   >
                     Reload
@@ -216,7 +235,10 @@ export function SettingsPage() {
                     Permanently wipe all configuration data and restart the onboarding process. This action cannot be undone.
                   </p>
                 </div>
-                <button className="px-6 py-2 border border-red-200 dark:border-red-800 bg-white dark:bg-transparent text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600 font-bold rounded-lg transition-all text-sm whitespace-nowrap">
+                <button
+                  onClick={() => setShowResetModal(true)}
+                  className="px-6 py-2 border border-red-200 dark:border-red-800 bg-white dark:bg-transparent text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600 font-bold rounded-lg transition-all text-sm whitespace-nowrap"
+                >
                   Reset All Settings
                 </button>
               </div>
@@ -227,12 +249,29 @@ export function SettingsPage() {
           <footer className="mt-20 flex items-center justify-between text-slate-400 text-xs">
             <p>&copy; 2024 Harbor Utility. All rights reserved.</p>
             <div className="flex space-x-4">
-              <a className="hover:text-primary transition-colors" href="#">Privacy Policy</a>
-              <a className="hover:text-primary transition-colors" href="#">Terms of Service</a>
+              <a className="hover:text-primary transition-colors" href="https://github.com/Eduard2609/Harbor" target="_blank" rel="noreferrer">GitHub</a>
             </div>
           </footer>
         </div>
       </div>
+
+      {feedbackMessage && (
+        <div className="fixed bottom-8 right-8 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
+          {feedbackMessage}
+        </div>
+      )
+      }
+
+      <ConfirmationModal
+        isOpen={showResetModal}
+        title="Reset to Defaults?"
+        message="Are you sure you want to reset all settings to their default values? This action cannot be undone."
+        confirmLabel="Yes, Reset Everything"
+        cancelLabel="No, Keep Settings"
+        isDestructive={true}
+        onConfirm={handleReset}
+        onCancel={() => setShowResetModal(false)}
+      />
     </>
   );
 }

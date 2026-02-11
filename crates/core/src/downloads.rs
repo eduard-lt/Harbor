@@ -36,6 +36,178 @@ pub struct DownloadsConfig {
 ///     println!("Monitoring {}", cfg.download_dir);
 /// }
 /// ```
+pub fn default_config() -> DownloadsConfig {
+    let user = std::env::var("USERPROFILE").unwrap_or_else(|_| "C:\\Users\\Public".to_string());
+    let dl = format!("{}\\Downloads", user);
+    let pictures = format!("{}\\Downloads\\Images", user);
+    let videos = format!("{}\\Downloads\\Videos", user);
+    let music = format!("{}\\Downloads\\Music", user);
+    let docs = format!("{}\\Downloads\\Documents", user);
+    let archives = format!("{}\\Downloads\\Archives", user);
+    let installers = format!("{}\\Downloads\\Installers", user);
+    let torrents = format!("{}\\Downloads\\Torrents", user);
+    let isos = format!("{}\\Downloads\\ISOs", user);
+    let dev = format!("{}\\Downloads\\Dev", user);
+    let subtitles = format!("{}\\Downloads\\Subtitles", user);
+    let webpages = format!("{}\\Downloads\\Webpages", user);
+
+    DownloadsConfig {
+        download_dir: dl,
+        min_age_secs: Some(5),
+        rules: vec![
+            Rule {
+                name: "Images".to_string(),
+                extensions: Some(
+                    [
+                        "jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "heic", "svg", "avif",
+                    ]
+                    .iter()
+                    .map(|s| s.to_string())
+                    .collect(),
+                ),
+                pattern: None,
+                min_size_bytes: None,
+                max_size_bytes: None,
+                target_dir: pictures,
+                create_symlink: None,
+                enabled: Some(true),
+            },
+            Rule {
+                name: "Videos".to_string(),
+                extensions: Some(
+                    ["mp4", "mkv", "avi", "mov", "wmv", "webm"]
+                        .iter()
+                        .map(|s| s.to_string())
+                        .collect(),
+                ),
+                pattern: None,
+                min_size_bytes: None,
+                max_size_bytes: None,
+                target_dir: videos,
+                create_symlink: None,
+                enabled: Some(true),
+            },
+            Rule {
+                name: "Music".to_string(),
+                extensions: Some(
+                    ["mp3", "flac", "wav", "aac", "ogg"]
+                        .iter()
+                        .map(|s| s.to_string())
+                        .collect(),
+                ),
+                pattern: None,
+                min_size_bytes: None,
+                max_size_bytes: None,
+                target_dir: music,
+                create_symlink: None,
+                enabled: Some(true),
+            },
+            Rule {
+                name: "Archives".to_string(),
+                extensions: Some(
+                    ["zip", "rar", "7z", "tar", "gz", "xz"]
+                        .iter()
+                        .map(|s| s.to_string())
+                        .collect(),
+                ),
+                pattern: None,
+                min_size_bytes: None,
+                max_size_bytes: None,
+                target_dir: archives,
+                create_symlink: None,
+                enabled: Some(true),
+            },
+            Rule {
+                name: "Documents".to_string(),
+                extensions: Some(
+                    [
+                        "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "rtf",
+                    ]
+                    .iter()
+                    .map(|s| s.to_string())
+                    .collect(),
+                ),
+                pattern: None,
+                min_size_bytes: None,
+                max_size_bytes: None,
+                target_dir: docs.clone(),
+                create_symlink: None,
+                enabled: Some(true),
+            },
+            Rule {
+                name: "Installers".to_string(),
+                extensions: Some(
+                    ["exe", "msi", "msix", "dmg", "pkg", "apk"]
+                        .iter()
+                        .map(|s| s.to_string())
+                        .collect(),
+                ),
+                pattern: None,
+                min_size_bytes: None,
+                max_size_bytes: None,
+                target_dir: installers,
+                create_symlink: None,
+                enabled: Some(true),
+            },
+            Rule {
+                name: "ISOs".to_string(),
+                extensions: Some(["iso"].iter().map(|s| s.to_string()).collect()),
+                pattern: None,
+                min_size_bytes: None,
+                max_size_bytes: None,
+                target_dir: isos,
+                create_symlink: None,
+                enabled: Some(true),
+            },
+            Rule {
+                name: "Torrents".to_string(),
+                extensions: Some(["torrent"].iter().map(|s| s.to_string()).collect()),
+                pattern: None,
+                min_size_bytes: None,
+                max_size_bytes: None,
+                target_dir: torrents,
+                create_symlink: None,
+                enabled: Some(true),
+            },
+            Rule {
+                name: "Dev".to_string(),
+                extensions: Some(
+                    ["json", "env", "xml", "plist"]
+                        .iter()
+                        .map(|s| s.to_string())
+                        .collect(),
+                ),
+                pattern: None,
+                min_size_bytes: None,
+                max_size_bytes: None,
+                target_dir: dev,
+                create_symlink: None,
+                enabled: Some(true),
+            },
+            Rule {
+                name: "Web Pages".to_string(),
+                extensions: Some(["html", "htm"].iter().map(|s| s.to_string()).collect()),
+                pattern: None,
+                min_size_bytes: None,
+                max_size_bytes: None,
+                target_dir: webpages,
+                create_symlink: None,
+                enabled: Some(true),
+            },
+            Rule {
+                name: "Subtitles".to_string(),
+                extensions: Some(["srt", "vtt"].iter().map(|s| s.to_string()).collect()),
+                pattern: None,
+                min_size_bytes: None,
+                max_size_bytes: None,
+                target_dir: subtitles,
+                create_symlink: None,
+                enabled: Some(true),
+            },
+        ],
+    }
+}
+
 pub fn load_downloads_config(path: impl AsRef<Path>) -> Result<DownloadsConfig> {
     let p = path.as_ref();
     let content = fs::read_to_string(p).with_context(|| format!("read {}", p.display()))?;

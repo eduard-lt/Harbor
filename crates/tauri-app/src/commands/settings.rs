@@ -262,3 +262,41 @@ pub async fn open_downloads_folder(state: State<'_, AppState>) -> Result<(), Str
 pub async fn get_config_path(state: State<'_, AppState>) -> Result<String, String> {
     Ok(state.config_path.to_string_lossy().to_string())
 }
+
+#[tauri::command]
+pub async fn reset_to_defaults(state: State<'_, AppState>) -> Result<(), String> {
+    let config = harbor_core::downloads::default_config();
+
+    // Save to disk
+    if let Ok(yaml) = serde_yaml::to_string(&config) {
+        let _ = std::fs::write(&state.config_path, yaml)
+            .map_err(|e| format!("Failed to write config: {}", e))?;
+    } else {
+        return Err("Failed to serialize default config".to_string());
+    }
+
+    // Update state
+    let mut state_config = state.config.write().map_err(|e| e.to_string())?;
+    *state_config = config;
+
+    // Restart service if running to pick up new config
+    // We can just rely on internal_start_service logic which re-reads config if we stop/start?
+    // Actually, internal_start_service reads from state.config via read lock.
+    // But verify if the running thread picks up changes?
+    // The running thread has a CLONE of the config at start.
+    // So if service is running, we MUST restart it.
+
+    // We can't access `internal_stop_service` easily if we are holding a write lock on config?
+    // No, locks are separate. global `watcher_flag` and `watcher_handle` vs `config` RwLock.
+
+    // But we are holding `state.config` write lock right now.
+    // `internal_start_service` needs `state.config` read lock.
+    // So we must drop our write lock before calling any service functions.
+    drop(state_config);
+
+    // Stop and start service to apply changes
+    let _ = internal_stop_service(&state);
+    let _ = internal_start_service(&state);
+
+    Ok(())
+}

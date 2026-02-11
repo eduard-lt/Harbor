@@ -3,189 +3,17 @@
 mod commands;
 mod state;
 
-use harbor_core::downloads::{load_downloads_config, DownloadsConfig};
+use harbor_core::downloads::{default_config, load_downloads_config, DownloadsConfig};
 use harbor_core::types::Rule;
 
 use state::AppState;
 use std::path::PathBuf;
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 
 fn local_appdata_harbor() -> PathBuf {
     std::env::var("LOCALAPPDATA")
         .map(|p| PathBuf::from(p).join("Harbor"))
         .unwrap_or(PathBuf::from("C:\\Harbor"))
-}
-
-fn default_config() -> DownloadsConfig {
-    let user = std::env::var("USERPROFILE").unwrap_or_else(|_| "C:\\Users\\Public".to_string());
-    let dl = format!("{}\\Downloads", user);
-    let pictures = format!("{}\\Downloads\\Images", user);
-    let videos = format!("{}\\Downloads\\Videos", user);
-    let music = format!("{}\\Downloads\\Music", user);
-    let docs = format!("{}\\Downloads\\Documents", user);
-    let archives = format!("{}\\Downloads\\Archives", user);
-    let installers = format!("{}\\Downloads\\Installers", user);
-    let torrents = format!("{}\\Downloads\\Torrents", user);
-    let isos = format!("{}\\Downloads\\ISOs", user);
-    let dev = format!("{}\\Downloads\\Dev", user);
-    let subtitles = format!("{}\\Downloads\\Subtitles", user);
-    let webpages = format!("{}\\Downloads\\Webpages", user);
-
-    DownloadsConfig {
-        download_dir: dl,
-        min_age_secs: Some(5),
-        rules: vec![
-            Rule {
-                name: "Images".to_string(),
-                extensions: Some(
-                    [
-                        "jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "heic", "svg", "avif",
-                    ]
-                    .iter()
-                    .map(|s| s.to_string())
-                    .collect(),
-                ),
-                pattern: None,
-                min_size_bytes: None,
-                max_size_bytes: None,
-                target_dir: pictures,
-                create_symlink: None,
-                enabled: Some(true),
-            },
-            Rule {
-                name: "Videos".to_string(),
-                extensions: Some(
-                    ["mp4", "mkv", "avi", "mov", "wmv", "webm"]
-                        .iter()
-                        .map(|s| s.to_string())
-                        .collect(),
-                ),
-                pattern: None,
-                min_size_bytes: None,
-                max_size_bytes: None,
-                target_dir: videos,
-                create_symlink: None,
-                enabled: Some(true),
-            },
-            Rule {
-                name: "Music".to_string(),
-                extensions: Some(
-                    ["mp3", "flac", "wav", "aac", "ogg"]
-                        .iter()
-                        .map(|s| s.to_string())
-                        .collect(),
-                ),
-                pattern: None,
-                min_size_bytes: None,
-                max_size_bytes: None,
-                target_dir: music,
-                create_symlink: None,
-                enabled: Some(true),
-            },
-            Rule {
-                name: "Archives".to_string(),
-                extensions: Some(
-                    ["zip", "rar", "7z", "tar", "gz", "xz"]
-                        .iter()
-                        .map(|s| s.to_string())
-                        .collect(),
-                ),
-                pattern: None,
-                min_size_bytes: None,
-                max_size_bytes: None,
-                target_dir: archives,
-                create_symlink: None,
-                enabled: Some(true),
-            },
-            Rule {
-                name: "Documents".to_string(),
-                extensions: Some(
-                    [
-                        "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "rtf",
-                    ]
-                    .iter()
-                    .map(|s| s.to_string())
-                    .collect(),
-                ),
-                pattern: None,
-                min_size_bytes: None,
-                max_size_bytes: None,
-                target_dir: docs.clone(),
-                create_symlink: None,
-                enabled: Some(true),
-            },
-            Rule {
-                name: "Installers".to_string(),
-                extensions: Some(
-                    ["exe", "msi", "msix", "dmg", "pkg", "apk"]
-                        .iter()
-                        .map(|s| s.to_string())
-                        .collect(),
-                ),
-                pattern: None,
-                min_size_bytes: None,
-                max_size_bytes: None,
-                target_dir: installers,
-                create_symlink: None,
-                enabled: Some(true),
-            },
-            Rule {
-                name: "ISOs".to_string(),
-                extensions: Some(["iso"].iter().map(|s| s.to_string()).collect()),
-                pattern: None,
-                min_size_bytes: None,
-                max_size_bytes: None,
-                target_dir: isos,
-                create_symlink: None,
-                enabled: Some(true),
-            },
-            Rule {
-                name: "Torrents".to_string(),
-                extensions: Some(["torrent"].iter().map(|s| s.to_string()).collect()),
-                pattern: None,
-                min_size_bytes: None,
-                max_size_bytes: None,
-                target_dir: torrents,
-                create_symlink: None,
-                enabled: Some(true),
-            },
-            Rule {
-                name: "Dev".to_string(),
-                extensions: Some(
-                    ["json", "env", "xml", "plist"]
-                        .iter()
-                        .map(|s| s.to_string())
-                        .collect(),
-                ),
-                pattern: None,
-                min_size_bytes: None,
-                max_size_bytes: None,
-                target_dir: dev,
-                create_symlink: None,
-                enabled: Some(true),
-            },
-            Rule {
-                name: "Web Pages".to_string(),
-                extensions: Some(["html", "htm"].iter().map(|s| s.to_string()).collect()),
-                pattern: None,
-                min_size_bytes: None,
-                max_size_bytes: None,
-                target_dir: webpages,
-                create_symlink: None,
-                enabled: Some(true),
-            },
-            Rule {
-                name: "Subtitles".to_string(),
-                extensions: Some(["srt", "vtt"].iter().map(|s| s.to_string()).collect()),
-                pattern: None,
-                min_size_bytes: None,
-                max_size_bytes: None,
-                target_dir: subtitles,
-                create_symlink: None,
-                enabled: Some(true),
-            },
-        ],
-    }
 }
 
 fn main() {
@@ -216,6 +44,9 @@ fn main() {
 
     let app_state = AppState::new(cfg_path, config);
 
+    // Start service by default
+    let _ = commands::settings::internal_start_service(&app_state);
+
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .manage(app_state)
@@ -243,27 +74,139 @@ fn main() {
             commands::open_config_file,
             commands::open_downloads_folder,
             commands::get_config_path,
+            commands::reset_to_defaults,
         ])
+        .on_window_event(|window, event| match event {
+            tauri::WindowEvent::CloseRequested { api, .. } => {
+                window.hide().unwrap();
+                api.prevent_close();
+            }
+            _ => {}
+        })
         .setup(|app| {
-            use tauri::menu::{Menu, MenuItem};
-            use tauri::tray::TrayIconBuilder;
+            use tauri::image::Image;
+            use tauri::menu::{CheckMenuItemBuilder, MenuBuilder, MenuItemBuilder};
+            use tauri::tray::{MouseButton, TrayIconBuilder, TrayIconEvent};
 
-            let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<String>)?;
-            let show_i = MenuItem::with_id(app, "show", "Open Harbor", true, None::<String>)?;
-            let menu = Menu::with_items(app, &[&show_i, &quit_i])?;
+            // Load _h icon
+            let icon_bytes = include_bytes!("../../../assets/icon_h.ico");
+            let tray_icon = Image::from_bytes(icon_bytes).expect("Failed to load tray icon");
+
+            // Build Tray Menu
+            let status_on = CheckMenuItemBuilder::new("Service On")
+                .id("service_on")
+                .checked(true) // Default is on
+                .build(app)?;
+
+            let status_off = CheckMenuItemBuilder::new("Service Off")
+                .id("service_off")
+                .checked(false)
+                .build(app)?;
+
+            let organize_now = MenuItemBuilder::new("Organize Now")
+                .id("organize")
+                .build(app)?;
+
+            let open_downloads = MenuItemBuilder::new("Open Downloads")
+                .id("open_downloads")
+                .build(app)?;
+            let open_rules = MenuItemBuilder::new("Open Rules")
+                .id("open_rules")
+                .build(app)?; // Will open app at rules
+            let open_activity = MenuItemBuilder::new("Open Recent Moves")
+                .id("open_activity")
+                .build(app)?;
+            let open_settings = MenuItemBuilder::new("Settings")
+                .id("open_settings")
+                .build(app)?;
+
+            let quit_i = MenuItemBuilder::new("Quit").id("quit").build(app)?;
+
+            let menu = MenuBuilder::new(app)
+                .items(&[
+                    &status_on,
+                    &status_off,
+                    &tauri::menu::PredefinedMenuItem::separator(app)?,
+                    &organize_now,
+                    &tauri::menu::PredefinedMenuItem::separator(app)?,
+                    &open_downloads,
+                    &open_rules,
+                    &open_activity,
+                    &open_settings,
+                    &tauri::menu::PredefinedMenuItem::separator(app)?,
+                    &quit_i,
+                ])
+                .build()?;
 
             let _tray = TrayIconBuilder::with_id("tray")
-                .icon(app.default_window_icon().unwrap().clone())
+                .icon(tray_icon)
                 .menu(&menu)
                 .show_menu_on_left_click(false)
-                .on_menu_event(|app, event| match event.id.as_ref() {
-                    "quit" => {
-                        app.exit(0);
-                    }
-                    "show" => {
+                .on_tray_icon_event(|tray, event| match event {
+                    TrayIconEvent::Click {
+                        button: MouseButton::Left,
+                        ..
+                    } => {
+                        let app = tray.app_handle();
                         if let Some(window) = app.get_webview_window("main") {
                             let _ = window.show();
                             let _ = window.set_focus();
+                        }
+                    }
+                    _ => {}
+                })
+                .on_menu_event(move |app, event| match event.id.as_ref() {
+                    "quit" => {
+                        app.exit(0);
+                    }
+                    "service_on" => {
+                        let state: tauri::State<AppState> = app.state();
+                        let _ = commands::settings::internal_start_service(&state);
+                        let _ = status_on.set_checked(true);
+                        let _ = status_off.set_checked(false);
+                        // Force update UI if open? Not easy from here, UI polls status.
+                    }
+                    "service_off" => {
+                        let state: tauri::State<AppState> = app.state();
+                        let _ = commands::settings::internal_stop_service(&state);
+                        let _ = status_on.set_checked(false);
+                        let _ = status_off.set_checked(true);
+                    }
+                    "organize" => {
+                        let app_handle = app.clone();
+                        tauri::async_runtime::spawn(async move {
+                            let state: tauri::State<AppState> = app_handle.state();
+                            let _ = commands::trigger_organize_now(state).await;
+                        });
+                    }
+                    "open_downloads" => {
+                        let app_handle = app.clone();
+                        tauri::async_runtime::spawn(async move {
+                            let state: tauri::State<AppState> = app_handle.state();
+                            let _ = commands::open_downloads_folder(state).await;
+                        });
+                    }
+                    "open_rules" => {
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                            let _ = window.eval("window.location.href = '/rules'"); // Simple way to nav? Or use an event.
+                                                                                    // Better: emit event to frontend router.
+                            let _ = window.emit("navigate", "/rules");
+                        }
+                    }
+                    "open_activity" => {
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                            let _ = window.emit("navigate", "/");
+                        }
+                    }
+                    "open_settings" => {
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                            let _ = window.emit("navigate", "/settings");
                         }
                     }
                     _ => {}
