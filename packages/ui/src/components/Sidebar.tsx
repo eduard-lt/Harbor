@@ -17,9 +17,7 @@ export function Sidebar() {
     <aside className="w-20 lg:w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col transition-all duration-300">
       {/* Logo */}
       <div className="p-6 flex items-center gap-3">
-        <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white shadow-lg shadow-primary/20">
-          <span className="material-icons-round">anchor</span>
-        </div>
+        <img src="/harbor.svg" alt="Harbor" className="w-10 h-10 object-contain" />
         <span className="text-xl font-bold tracking-tight hidden lg:block dark:text-white">Harbor</span>
       </div>
 
@@ -30,10 +28,9 @@ export function Sidebar() {
             key={item.to}
             to={item.to}
             className={({ isActive }) =>
-              `flex items-center gap-4 px-4 py-3 rounded-lg transition-colors group ${
-                isActive
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+              `flex items-center gap-4 px-4 py-3 rounded-lg transition-colors group ${isActive
+                ? 'bg-primary/10 text-primary'
+                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
               }`
             }
           >
