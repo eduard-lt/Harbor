@@ -164,7 +164,14 @@ mod tests {
         let services = vec![s1, s2, s3];
 
         let order = topo_order(&services).unwrap();
-        assert_eq!(order, vec!["db".to_string(), "backend".to_string(), "frontend".to_string()]);
+        assert_eq!(
+            order,
+            vec![
+                "db".to_string(),
+                "backend".to_string(),
+                "frontend".to_string()
+            ]
+        );
     }
 
     #[test]

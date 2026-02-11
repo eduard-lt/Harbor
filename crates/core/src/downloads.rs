@@ -17,6 +17,8 @@ pub struct DownloadsConfig {
     pub min_age_secs: Option<u64>,
 }
 
+pub type OrganizeResult = (PathBuf, PathBuf, String, Option<String>);
+
 /// Loads and parses the downloads configuration file.
 ///
 /// This function reads a YAML file from the specified path, parses it into a
@@ -300,9 +302,7 @@ fn unique_target(target: &Path) -> PathBuf {
 ///
 /// Returns a list of actions taken, where each action is a tuple:
 /// `(original_path, new_path, rule_name, symlink_info)`.
-pub fn organize_once(
-    cfg: &DownloadsConfig,
-) -> Result<Vec<(PathBuf, PathBuf, String, Option<String>)>> {
+pub fn organize_once(cfg: &DownloadsConfig) -> Result<Vec<OrganizeResult>> {
     let base = PathBuf::from(&cfg.download_dir);
     let min_age = Duration::from_secs(cfg.min_age_secs.unwrap_or(5));
     let mut actions = Vec::new();
@@ -395,7 +395,7 @@ pub fn watch_polling<F>(
     callback: F,
 ) -> Result<()>
 where
-    F: Fn(&[(PathBuf, PathBuf, String, Option<String>)]),
+    F: Fn(&[OrganizeResult]),
 {
     use std::sync::atomic::Ordering;
     loop {
