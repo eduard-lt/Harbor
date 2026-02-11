@@ -3,7 +3,9 @@
 mod commands;
 mod state;
 
-use harbor_core::downloads::{load_downloads_config, DownloadsConfig, Rule};
+use harbor_core::downloads::{load_downloads_config, DownloadsConfig};
+use harbor_core::types::Rule;
+
 use state::AppState;
 use std::path::PathBuf;
 
@@ -35,10 +37,12 @@ fn default_config() -> DownloadsConfig {
             Rule {
                 name: "Images".to_string(),
                 extensions: Some(
-                    ["jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "heic", "svg", "avif"]
-                        .iter()
-                        .map(|s| s.to_string())
-                        .collect(),
+                    [
+                        "jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "heic", "svg", "avif",
+                    ]
+                    .iter()
+                    .map(|s| s.to_string())
+                    .collect(),
                 ),
                 pattern: None,
                 min_size_bytes: None,
@@ -95,10 +99,12 @@ fn default_config() -> DownloadsConfig {
             Rule {
                 name: "Documents".to_string(),
                 extensions: Some(
-                    ["pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "rtf"]
-                        .iter()
-                        .map(|s| s.to_string())
-                        .collect(),
+                    [
+                        "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "rtf",
+                    ]
+                    .iter()
+                    .map(|s| s.to_string())
+                    .collect(),
                 ),
                 pattern: None,
                 min_size_bytes: None,

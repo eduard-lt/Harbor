@@ -1,4 +1,6 @@
+use crate::types::Rule;
 use anyhow::{Context, Result};
+
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -13,23 +15,6 @@ pub struct DownloadsConfig {
     pub download_dir: String,
     pub rules: Vec<Rule>,
     pub min_age_secs: Option<u64>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Rule {
-    pub name: String,
-    pub extensions: Option<Vec<String>>,
-    pub pattern: Option<String>,
-    pub min_size_bytes: Option<u64>,
-    pub max_size_bytes: Option<u64>,
-    pub target_dir: String,
-    pub create_symlink: Option<bool>,
-    #[serde(default = "default_enabled")]
-    pub enabled: Option<bool>,
-}
-
-fn default_enabled() -> Option<bool> {
-    Some(true)
 }
 
 /// Loads and parses the downloads configuration file.
@@ -462,6 +447,7 @@ mod tests {
                 max_size_bytes: None,
                 target_dir: target.to_str().unwrap().into(),
                 create_symlink: Some(false),
+                enabled: None,
             }],
         };
 
@@ -503,6 +489,7 @@ mod tests {
                 max_size_bytes: None,
                 target_dir: target.to_str().unwrap().into(),
                 create_symlink: None,
+                enabled: None,
             }],
             min_age_secs: None,
         };

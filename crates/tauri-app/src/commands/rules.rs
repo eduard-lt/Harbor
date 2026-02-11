@@ -1,5 +1,7 @@
 use crate::state::AppState;
-use harbor_core::downloads::{load_downloads_config, DownloadsConfig, Rule};
+use harbor_core::downloads::{load_downloads_config, DownloadsConfig};
+use harbor_core::types::Rule;
+
 use serde::{Deserialize, Serialize};
 use std::fs;
 use tauri::State;
@@ -106,13 +108,10 @@ fn derive_icon_color(extensions: Option<&Vec<String>>) -> String {
 }
 
 fn save_config(state: &AppState, config: &DownloadsConfig) -> Result<(), String> {
-    let yaml = serde_yaml::to_string(config).map_err(|e| format!("Failed to serialize config: {}", e))?;
+    let yaml =
+        serde_yaml::to_string(config).map_err(|e| format!("Failed to serialize config: {}", e))?;
     fs::write(&state.config_path, yaml).map_err(|e| format!("Failed to write config: {}", e))?;
     Ok(())
-}
-
-fn reload_config(state: &AppState) -> Result<DownloadsConfig, String> {
-    load_downloads_config(&state.config_path).map_err(|e| format!("Failed to load config: {}", e))
 }
 
 #[tauri::command]

@@ -4,10 +4,10 @@
   "version": "0.6.0",
   "identifier": "com.harbor.app",
   "build": {
-    "beforeBuildCommand": "npm run build --prefix ../../packages/ui",
-    "beforeDevCommand": "npm run dev --prefix ../../packages/ui",
+    "beforeBuildCommand": "npm run build --prefix ../packages/ui",
+    "beforeDevCommand": "npm run dev --prefix ../packages/ui",
     "devUrl": "http://localhost:5173",
-    "frontendDist": "../../packages/ui/dist"
+    "frontendDist": "../packages/ui/dist"
   },
   "app": {
     "windows": [

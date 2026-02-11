@@ -8,8 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:dev": "cd ../../crates/tauri-app && tauri dev",
+    "tauri:build": "cd ../../crates/tauri-app && tauri build"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",

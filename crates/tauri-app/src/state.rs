@@ -33,12 +33,4 @@ impl AppState {
             .unwrap_or(&self.config_path)
             .join("recent_moves.log")
     }
-
-    /// Get the Harbor data directory
-    pub fn data_dir(&self) -> PathBuf {
-        self.config_path
-            .parent()
-            .unwrap_or(&self.config_path)
-            .to_path_buf()
-    }
 }

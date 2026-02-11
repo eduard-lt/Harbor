@@ -3,8 +3,8 @@
 use anyhow::Result;
 use harbor_core::downloads::{
     cleanup_old_symlinks, load_downloads_config, organize_once, watch_polling, DownloadsConfig,
-    Rule,
 };
+use harbor_core::types::Rule;
 use std::path::PathBuf;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
@@ -209,6 +209,7 @@ fn main() -> Result<()> {
                     max_size_bytes: None,
                     target_dir: pictures,
                     create_symlink: None,
+                    enabled: Some(true),
                 },
                 Rule {
                     name: "Videos".to_string(),
@@ -223,6 +224,7 @@ fn main() -> Result<()> {
                     max_size_bytes: None,
                     target_dir: videos,
                     create_symlink: None,
+                    enabled: Some(true),
                 },
                 Rule {
                     name: "Music".to_string(),
@@ -237,6 +239,7 @@ fn main() -> Result<()> {
                     max_size_bytes: None,
                     target_dir: music,
                     create_symlink: None,
+                    enabled: Some(true),
                 },
                 Rule {
                     name: "Archives".to_string(),
@@ -251,6 +254,7 @@ fn main() -> Result<()> {
                     max_size_bytes: None,
                     target_dir: archives,
                     create_symlink: None,
+                    enabled: Some(true),
                 },
                 Rule {
                     name: "Documents".to_string(),
@@ -267,6 +271,7 @@ fn main() -> Result<()> {
                     max_size_bytes: None,
                     target_dir: docs.clone(),
                     create_symlink: None,
+                    enabled: Some(true),
                 },
                 Rule {
                     name: "Installers".to_string(),
@@ -281,6 +286,7 @@ fn main() -> Result<()> {
                     max_size_bytes: None,
                     target_dir: installers,
                     create_symlink: None,
+                    enabled: Some(true),
                 },
                 Rule {
                     name: "ISOs".to_string(),
@@ -290,6 +296,7 @@ fn main() -> Result<()> {
                     max_size_bytes: None,
                     target_dir: isos,
                     create_symlink: None,
+                    enabled: Some(true),
                 },
                 Rule {
                     name: "Torrents".to_string(),
@@ -299,6 +306,7 @@ fn main() -> Result<()> {
                     max_size_bytes: None,
                     target_dir: torrents,
                     create_symlink: None,
+                    enabled: Some(true),
                 },
                 Rule {
                     name: "Dev".to_string(),
@@ -313,6 +321,7 @@ fn main() -> Result<()> {
                     max_size_bytes: None,
                     target_dir: dev,
                     create_symlink: None,
+                    enabled: Some(true),
                 },
                 Rule {
                     name: "Data".to_string(),
@@ -322,6 +331,7 @@ fn main() -> Result<()> {
                     max_size_bytes: None,
                     target_dir: docs,
                     create_symlink: None,
+                    enabled: Some(true),
                 },
                 Rule {
                     name: "Web Pages".to_string(),
@@ -331,6 +341,7 @@ fn main() -> Result<()> {
                     max_size_bytes: None,
                     target_dir: webpages,
                     create_symlink: None,
+                    enabled: Some(true),
                 },
                 Rule {
                     name: "Subtitles".to_string(),
@@ -340,6 +351,7 @@ fn main() -> Result<()> {
                     max_size_bytes: None,
                     target_dir: subtitles,
                     create_symlink: None,
+                    enabled: Some(true),
                 },
             ],
         }

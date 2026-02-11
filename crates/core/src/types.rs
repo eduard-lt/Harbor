@@ -34,3 +34,20 @@ pub enum HealthCheckKind {
     Tcp,
     None,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Rule {
+    pub name: String,
+    pub extensions: Option<Vec<String>>,
+    pub pattern: Option<String>,
+    pub min_size_bytes: Option<u64>,
+    pub max_size_bytes: Option<u64>,
+    pub target_dir: String,
+    pub create_symlink: Option<bool>,
+    #[serde(default = "default_enabled")]
+    pub enabled: Option<bool>,
+}
+
+fn default_enabled() -> Option<bool> {
+    Some(true)
+}

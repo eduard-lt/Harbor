@@ -1,12 +1,20 @@
-import { useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { Header } from '../components/Header';
+import { useSettings } from '../hooks/useSettings';
 
 export function SettingsPage() {
   const { theme, setTheme } = useTheme();
-  const [serviceEnabled, setServiceEnabled] = useState(true);
-  const [launchAtStartup, setLaunchAtStartup] = useState(true);
-  const [showNotifications, setShowNotifications] = useState(false);
+  const {
+    serviceStatus,
+    startupEnabled,
+    loading,
+    error,
+    toggleService,
+    toggleStartup,
+    reload
+  } = useSettings();
+
+  const serviceEnabled = serviceStatus.running;
 
   return (
     <>
@@ -14,6 +22,12 @@ export function SettingsPage() {
 
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         <div className="max-w-4xl mx-auto py-12 px-8">
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-lg">
+              {error}
+            </div>
+          )}
+
           <div className="space-y-8">
             {/* Service Status */}
             <section className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
@@ -22,7 +36,7 @@ export function SettingsPage() {
                   <div className="flex items-center space-x-2 mb-2">
                     <span className={`inline-block w-2.5 h-2.5 rounded-full ${serviceEnabled ? 'bg-emerald-500' : 'bg-slate-400'}`}></span>
                     <span className={`text-xs font-bold uppercase tracking-widest ${serviceEnabled ? 'text-emerald-600' : 'text-slate-500'}`}>
-                      {serviceEnabled ? 'Service is Running' : 'Service is Stopped'}
+                      {loading ? 'Checking...' : (serviceEnabled ? 'Service is Running' : 'Service is Stopped')}
                     </span>
                   </div>
                   <h3 className="text-xl font-bold text-slate-800 dark:text-white">Service Status</h3>
@@ -36,7 +50,8 @@ export function SettingsPage() {
                       type="checkbox"
                       className="sr-only peer"
                       checked={serviceEnabled}
-                      onChange={() => setServiceEnabled(!serviceEnabled)}
+                      onChange={toggleService}
+                      disabled={loading}
                     />
                     <div className="w-14 h-8 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary shadow-inner"></div>
                   </label>
@@ -44,10 +59,10 @@ export function SettingsPage() {
               </div>
               <div className="px-8 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
                 <span className="text-xs text-slate-500 uppercase tracking-tight font-semibold">
-                  Process ID: <span className="text-slate-800 dark:text-white font-mono ml-1">8291-HB</span>
+                  Process ID: <span className="text-slate-800 dark:text-white font-mono ml-1">Native</span>
                 </span>
                 <span className="text-xs text-slate-500 uppercase tracking-tight font-semibold">
-                  Uptime: <span className="text-slate-800 dark:text-white font-mono ml-1">14d 06h 22m</span>
+                  Uptime: <span className="text-slate-800 dark:text-white font-mono ml-1">{serviceStatus.uptime_seconds ? `${Math.floor(serviceStatus.uptime_seconds / 60)}m` : 'N/A'}</span>
                 </span>
               </div>
             </section>
@@ -65,11 +80,10 @@ export function SettingsPage() {
                   onClick={() => setTheme('light')}
                 >
                   <div
-                    className={`h-24 w-full bg-white rounded-lg border-2 transition-all flex flex-col overflow-hidden relative ${
-                      theme === 'light'
+                    className={`h-24 w-full bg-white rounded-lg border-2 transition-all flex flex-col overflow-hidden relative ${theme === 'light'
                         ? 'border-primary shadow-[0_0_15px_rgba(14,155,148,0.1)]'
                         : 'border-transparent hover:border-primary/50'
-                    }`}
+                      }`}
                   >
                     <div className="h-4 bg-slate-100 w-full border-b border-slate-200"></div>
                     <div className="p-2 space-y-1">
@@ -98,11 +112,10 @@ export function SettingsPage() {
                   onClick={() => setTheme('dark')}
                 >
                   <div
-                    className={`h-24 w-full bg-slate-800 rounded-lg border-2 transition-all flex flex-col overflow-hidden relative ${
-                      theme === 'dark'
+                    className={`h-24 w-full bg-slate-800 rounded-lg border-2 transition-all flex flex-col overflow-hidden relative ${theme === 'dark'
                         ? 'border-primary shadow-[0_0_15px_rgba(14,155,148,0.1)]'
                         : 'border-transparent hover:border-primary/50'
-                    }`}
+                      }`}
                   >
                     <div className="h-4 bg-slate-900 w-full"></div>
                     <div className="p-2 space-y-1">
@@ -131,11 +144,10 @@ export function SettingsPage() {
                   onClick={() => setTheme('system')}
                 >
                   <div
-                    className={`h-24 w-full bg-slate-100 rounded-lg border-2 transition-all flex overflow-hidden relative ${
-                      theme === 'system'
+                    className={`h-24 w-full bg-slate-100 rounded-lg border-2 transition-all flex overflow-hidden relative ${theme === 'system'
                         ? 'border-primary shadow-[0_0_15px_rgba(14,155,148,0.1)]'
                         : 'border-transparent hover:border-primary/50'
-                    }`}
+                      }`}
                   >
                     <div className="w-1/2 bg-white h-full border-r border-slate-200"></div>
                     <div className="w-1/2 bg-slate-900 h-full"></div>
@@ -173,26 +185,24 @@ export function SettingsPage() {
                     <input
                       type="checkbox"
                       className="sr-only peer"
-                      checked={launchAtStartup}
-                      onChange={() => setLaunchAtStartup(!launchAtStartup)}
+                      checked={startupEnabled}
+                      onChange={toggleStartup}
                     />
                     <div className="w-10 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
                   </label>
                 </div>
                 <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
+                  {/* Notifications placeholder - not yet implemented in backend properly */}
                   <div>
-                    <p className="text-sm font-semibold text-slate-800 dark:text-white">Show notifications</p>
-                    <p className="text-xs text-slate-500">Notify on file operations.</p>
+                    <p className="text-sm font-semibold text-slate-800 dark:text-white">Config Reload</p>
+                    <p className="text-xs text-slate-500">Force reload configuration from disk.</p>
                   </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="sr-only peer"
-                      checked={showNotifications}
-                      onChange={() => setShowNotifications(!showNotifications)}
-                    />
-                    <div className="w-10 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                  </label>
+                  <button
+                    onClick={() => reload()}
+                    className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-medium transition-colors"
+                  >
+                    Reload
+                  </button>
                 </div>
               </div>
             </section>

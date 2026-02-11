@@ -1,5 +1,5 @@
 use crate::state::AppState;
-use chrono::{DateTime, Local, NaiveDateTime};
+use chrono::Local;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -91,13 +91,17 @@ fn derive_icon_and_color(ext: &str) -> (String, String) {
         "jpg" | "jpeg" | "png" | "gif" | "webp" | "svg" | "bmp" | "tiff" | "heic" | "avif" => {
             ("image".to_string(), "blue".to_string())
         }
-        "mp4" | "mkv" | "avi" | "mov" | "wmv" | "webm" => ("movie".to_string(), "indigo".to_string()),
+        "mp4" | "mkv" | "avi" | "mov" | "wmv" | "webm" => {
+            ("movie".to_string(), "indigo".to_string())
+        }
         "mp3" | "flac" | "wav" | "aac" | "ogg" => ("music_note".to_string(), "pink".to_string()),
         "pdf" => ("description".to_string(), "red".to_string()),
         "doc" | "docx" | "txt" | "rtf" => ("description".to_string(), "blue".to_string()),
         "xls" | "xlsx" | "csv" => ("table_chart".to_string(), "green".to_string()),
         "ppt" | "pptx" => ("slideshow".to_string(), "amber".to_string()),
-        "zip" | "rar" | "7z" | "tar" | "gz" | "xz" => ("folder_zip".to_string(), "amber".to_string()),
+        "zip" | "rar" | "7z" | "tar" | "gz" | "xz" => {
+            ("folder_zip".to_string(), "amber".to_string())
+        }
         "exe" | "msi" | "msix" | "dmg" | "pkg" | "apk" => {
             ("install_desktop".to_string(), "purple".to_string())
         }
@@ -135,7 +139,12 @@ pub async fn get_activity_logs(
     let mut all_logs: Vec<ActivityLogDto> = reader
         .lines()
         .filter_map(|line| line.ok())
-        .filter(|line| !line.trim().is_empty() && !line.starts_with("Recent Moves") && !line.starts_with("---") && !line.starts_with("Startup:"))
+        .filter(|line| {
+            !line.trim().is_empty()
+                && !line.starts_with("Recent Moves")
+                && !line.starts_with("---")
+                && !line.starts_with("Startup:")
+        })
         .enumerate()
         .filter_map(|(idx, line)| parse_log_line(&line, idx))
         .collect();
@@ -147,11 +156,7 @@ pub async fn get_activity_logs(
     let has_more = offset + limit < total;
 
     // Apply pagination
-    let logs: Vec<ActivityLogDto> = all_logs
-        .into_iter()
-        .skip(offset)
-        .take(limit)
-        .collect();
+    let logs: Vec<ActivityLogDto> = all_logs.into_iter().skip(offset).take(limit).collect();
 
     Ok(ActivityLogsResponse {
         logs,
@@ -176,11 +181,16 @@ pub async fn get_activity_stats(state: State<'_, AppState>) -> Result<ActivitySt
     let file = fs::File::open(&log_path).map_err(|e| format!("Failed to open log file: {}", e))?;
     let reader = BufReader::new(file);
 
-    let mut rule_counts: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+    let mut rule_counts: std::collections::HashMap<String, usize> =
+        std::collections::HashMap::new();
     let mut total = 0;
 
     for line in reader.lines().filter_map(|l| l.ok()) {
-        if line.trim().is_empty() || line.starts_with("Recent Moves") || line.starts_with("---") || line.starts_with("Startup:") {
+        if line.trim().is_empty()
+            || line.starts_with("Recent Moves")
+            || line.starts_with("---")
+            || line.starts_with("Startup:")
+        {
             continue;
         }
 

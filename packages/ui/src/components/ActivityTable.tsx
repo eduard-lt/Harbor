@@ -1,4 +1,4 @@
-import type { ActivityLog } from '../data/mockData';
+import type { ActivityLog } from '../lib/tauri';
 
 interface ActivityTableProps {
   logs: ActivityLog[];
@@ -20,19 +20,21 @@ const statusClasses: Record<string, string> = {
   success: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400',
   conflict: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400',
   ignored: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400',
+  error: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
 };
 
 const statusDotClasses: Record<string, string> = {
   success: 'bg-emerald-500',
   conflict: 'bg-yellow-500',
   ignored: 'bg-slate-500',
+  error: 'bg-red-500',
 };
 
 export function ActivityTable({
   logs,
-  totalResults = 1284,
-  currentPage = 1,
-  totalPages = 129,
+  totalResults: _totalResults = 0,
+  currentPage: _currentPage = 1,
+  totalPages: _totalPages = 1,
 }: ActivityTableProps) {
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
@@ -52,74 +54,58 @@ export function ActivityTable({
               className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors group"
             >
               <td className="px-6 py-4 text-sm text-slate-500 tabular-nums">
-                {log.timestamp}
+                {new Date(log.timestamp).toLocaleString()}
               </td>
               <td className="px-6 py-4">
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-8 h-8 rounded flex items-center justify-center ${
-                      iconColorClasses[log.iconColor]
-                    }`}
+                    className={`w-8 h-8 rounded flex items-center justify-center ${iconColorClasses[log.icon_color] || iconColorClasses['slate']
+                      }`}
                   >
-                    <span className="material-icons-round text-lg">{log.icon}</span>
+                    <span className="material-icons-round text-lg">{log.icon || 'description'}</span>
                   </div>
                   <span className="text-sm font-medium">{log.filename}</span>
                 </div>
               </td>
               <td className="px-6 py-4">
                 <div className="flex items-center gap-2 text-xs text-slate-500">
-                  <span className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
-                    {log.sourcePath}
+                  <span className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded max-w-[150px] truncate" title={log.source_path}>
+                    {log.source_path}
                   </span>
                   <span className="material-icons-round text-sm">chevron_right</span>
-                  <span className="bg-primary/10 text-primary px-2 py-1 rounded font-medium">
-                    {log.destPath}
+                  <span className="bg-primary/10 text-primary px-2 py-1 rounded font-medium max-w-[150px] truncate" title={log.dest_path}>
+                    {log.dest_path}
                   </span>
                 </div>
               </td>
               <td className="px-6 py-4 text-right">
                 <span
-                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
-                    statusClasses[log.status]
-                  }`}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${statusClasses[log.status] || statusClasses['ignored']
+                    }`}
                 >
                   <span
-                    className={`w-1.5 h-1.5 rounded-full ${statusDotClasses[log.status]}`}
+                    className={`w-1.5 h-1.5 rounded-full ${statusDotClasses[log.status] || statusDotClasses['ignored']}`}
                   ></span>
                   {log.status.charAt(0).toUpperCase() + log.status.slice(1)}
                 </span>
               </td>
             </tr>
           ))}
+          {logs.length === 0 && (
+            <tr>
+              <td colSpan={4} className="px-6 py-8 text-center text-slate-500">
+                No activity logs found.
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
 
-      {/* Pagination */}
+      {/* Pagination - Simplified for now as backend pagination support is basic */}
       <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between border-t border-slate-200 dark:border-slate-800">
         <p className="text-xs text-slate-500">
-          Showing 1 to {logs.length} of {totalResults.toLocaleString()} results
+          Showing {logs.length} results
         </p>
-        <div className="flex items-center gap-1">
-          <button className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-700 text-slate-400">
-            <span className="material-icons-round text-lg">chevron_left</span>
-          </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded bg-primary text-white text-xs font-bold shadow-sm shadow-primary/30">
-            {currentPage}
-          </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-700 text-xs font-medium text-slate-600 dark:text-slate-400">
-            2
-          </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-700 text-xs font-medium text-slate-600 dark:text-slate-400">
-            3
-          </button>
-          <span className="px-1 text-slate-400 text-xs">...</span>
-          <button className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-700 text-xs font-medium text-slate-600 dark:text-slate-400">
-            {totalPages}
-          </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-700 text-slate-400">
-            <span className="material-icons-round text-lg">chevron_right</span>
-          </button>
-        </div>
       </div>
     </div>
   );
