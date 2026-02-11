@@ -7,17 +7,17 @@
     "beforeBuildCommand": "npm run build --prefix ../packages/ui",
     "beforeDevCommand": "npm run dev --prefix ../packages/ui",
     "devUrl": "http://localhost:5173",
-    "frontendDist": "../packages/ui/dist"
+    "frontendDist": "../../packages/ui/dist"
   },
   "app": {
     "windows": [
       {
         "title": "Harbor",
-        "width": 1200,
-        "height": 800,
-        "minWidth": 800,
-        "minHeight": 600,
-        "resizable": true,
+        "width": 1920,
+        "height": 1080,
+        "minWidth": 1200,
+        "minHeight": 800,
+        "resizable": false,
         "fullscreen": false,
         "decorations": true,
         "transparent": false

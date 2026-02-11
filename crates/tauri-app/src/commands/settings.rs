@@ -5,6 +5,7 @@ use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
 use std::sync::atomic::Ordering;
+use std::sync::Arc;
 use std::thread;
 use tauri::State;
 
@@ -52,27 +53,44 @@ fn append_to_log(log_path: &PathBuf, actions: &[(PathBuf, PathBuf, String, Optio
 
 #[tauri::command]
 pub async fn get_service_status(state: State<'_, AppState>) -> Result<ServiceStatus, String> {
-    let running = state.watching.load(Ordering::SeqCst);
+    let flag_guard = state.watcher_flag.lock().map_err(|e| e.to_string())?;
+    let running = flag_guard.is_some();
+    drop(flag_guard); // Release lock early
+
+    let uptime_seconds = if running {
+        let start_time = state.service_start_time.lock().map_err(|e| e.to_string())?;
+        start_time.map(|t| t.elapsed().as_secs())
+    } else {
+        None
+    };
 
     Ok(ServiceStatus {
         running,
-        uptime_seconds: None, // Could track this if needed
+        uptime_seconds,
     })
 }
 
-#[tauri::command]
-pub async fn start_service(state: State<'_, AppState>) -> Result<(), String> {
-    if state.watching.swap(true, Ordering::SeqCst) {
-        // Already running
-        return Ok(());
+pub fn internal_start_service(state: &AppState) -> Result<(), String> {
+    let mut flag_guard = state.watcher_flag.lock().map_err(|e| e.to_string())?;
+
+    // If already running, do nothing
+    if let Some(flag) = flag_guard.as_ref() {
+        if flag.load(Ordering::SeqCst) {
+            return Ok(());
+        }
     }
 
+    // Create a new flag for this new thread
+    let new_flag = Arc::new(std::sync::atomic::AtomicBool::new(true));
+    *flag_guard = Some(new_flag.clone());
+
     let config = state.config.read().map_err(|e| e.to_string())?.clone();
-    let watching = state.watching.clone();
     let log_path = state.recent_log_path();
 
+    // Use the *new* flag for the thread
+    let thread_flag = new_flag.clone();
     let handle = thread::spawn(move || {
-        let _ = watch_polling(&config, 5, &watching, |actions| {
+        let _ = watch_polling(&config, 5, &thread_flag, |actions| {
             append_to_log(&log_path, actions);
         });
     });
@@ -80,18 +98,42 @@ pub async fn start_service(state: State<'_, AppState>) -> Result<(), String> {
     let mut guard = state.watcher_handle.lock().map_err(|e| e.to_string())?;
     *guard = Some(handle);
 
+    // Set start time
+    let mut time_guard = state.service_start_time.lock().map_err(|e| e.to_string())?;
+    *time_guard = Some(std::time::Instant::now());
+
+    Ok(())
+}
+
+pub fn internal_stop_service(state: &AppState) -> Result<(), String> {
+    let mut flag_guard = state.watcher_flag.lock().map_err(|e| e.to_string())?;
+
+    if let Some(flag) = flag_guard.take() {
+        // Signal the thread to stop
+        flag.store(false, Ordering::SeqCst);
+    }
+
+    // We don't join the thread here to avoid blocking the UI,
+    // but since we've set its specific flag to false, it WILL exit
+    // on its next loop iteration (within 5 seconds).
+
+    let mut guard = state.watcher_handle.lock().map_err(|e| e.to_string())?;
+    *guard = None;
+
+    let mut time_guard = state.service_start_time.lock().map_err(|e| e.to_string())?;
+    *time_guard = None;
+
     Ok(())
 }
 
 #[tauri::command]
+pub async fn start_service(state: State<'_, AppState>) -> Result<(), String> {
+    internal_start_service(&state)
+}
+
+#[tauri::command]
 pub async fn stop_service(state: State<'_, AppState>) -> Result<(), String> {
-    state.watching.store(false, Ordering::SeqCst);
-
-    // The watcher thread will exit on next iteration
-    let mut guard = state.watcher_handle.lock().map_err(|e| e.to_string())?;
-    *guard = None;
-
-    Ok(())
+    internal_stop_service(&state)
 }
 
 #[tauri::command]
@@ -160,8 +202,8 @@ pub async fn set_startup_enabled(enabled: bool) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn reload_config(state: State<'_, AppState>) -> Result<(), String> {
-    let new_config =
-        load_downloads_config(&state.config_path).map_err(|e| format!("Failed to reload config: {}", e))?;
+    let new_config = load_downloads_config(&state.config_path)
+        .map_err(|e| format!("Failed to reload config: {}", e))?;
 
     let mut config = state.config.write().map_err(|e| e.to_string())?;
     *config = new_config;

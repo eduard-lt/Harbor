@@ -42,7 +42,7 @@ fn parse_log_line(line: &str, id: usize) -> Option<ActivityLogDto> {
     // Log format: "source_path -> dest_path (rule_name) symlink_info"
     // Example: "C:\Downloads\file.jpg -> C:\Images\file.jpg (Images) Symlink created"
 
-    let arrow_pattern = Regex::new(r"^(.+?) -> (.+?) \(([^)]+)\)\s*(.*)$").ok()?;
+    let arrow_pattern = Regex::new(r"^(.+?) -> (.+) \(([^)]+)\)\s*(.*)$").ok()?;
 
     let caps = arrow_pattern.captures(line)?;
 

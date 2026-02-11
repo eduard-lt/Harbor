@@ -40,43 +40,37 @@ export function ActivityTable({
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
       <table className="w-full text-left border-collapse">
         <thead>
-          <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase tracking-[0.1em]">
-            <th className="px-6 py-4 font-bold text-slate-500">Timestamp</th>
-            <th className="px-6 py-4 font-bold text-slate-500">Filename</th>
-            <th className="px-6 py-4 font-bold text-slate-500">Path</th>
-            <th className="px-6 py-4 font-bold text-slate-500 text-right">Status</th>
+          <tr className="text-left text-xs font-medium text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+            <th className="px-6 py-3 w-[20%]">File</th>
+            <th className="px-6 py-3 w-[50%]">Path</th>
+            <th className="px-6 py-3 w-[15%] text-right">Rule</th>
+            <th className="px-6 py-3 w-[15%] text-right">Status</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+        <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
           {logs.map((log) => (
-            <tr
-              key={log.id}
-              className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors group"
-            >
-              <td className="px-6 py-4 text-sm text-slate-500 tabular-nums">
-                {new Date(log.timestamp).toLocaleString()}
+            <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+              <td className="px-6 py-4">
+                <div className="font-medium text-slate-900 dark:text-white truncate max-w-[200px]" title={log.filename}>
+                  {log.filename}
+                </div>
               </td>
               <td className="px-6 py-4">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-8 h-8 rounded flex items-center justify-center ${iconColorClasses[log.icon_color] || iconColorClasses['slate']
-                      }`}
-                  >
-                    <span className="material-icons-round text-lg">{log.icon || 'description'}</span>
+                <div className="flex flex-col gap-1">
+                  <div className="text-xs text-slate-500 flex items-center gap-1">
+                    <span className="material-icons-round text-[14px]">folder_open</span>
+                    <span className="truncate max-w-[350px]" title={log.source_path}>{log.source_path}</span>
                   </div>
-                  <span className="text-sm font-medium">{log.filename}</span>
+                  <div className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                    <span className="material-icons-round text-[16px]">arrow_forward</span>
+                    <span className="truncate max-w-[350px]" title={log.dest_path}>{log.dest_path}</span>
+                  </div>
                 </div>
               </td>
-              <td className="px-6 py-4">
-                <div className="flex items-center gap-2 text-xs text-slate-500">
-                  <span className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded max-w-[150px] truncate" title={log.source_path}>
-                    {log.source_path}
-                  </span>
-                  <span className="material-icons-round text-sm">chevron_right</span>
-                  <span className="bg-primary/10 text-primary px-2 py-1 rounded font-medium max-w-[150px] truncate" title={log.dest_path}>
-                    {log.dest_path}
-                  </span>
-                </div>
+              <td className="px-6 py-4 text-right">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                  {log.rule_name}
+                </span>
               </td>
               <td className="px-6 py-4 text-right">
                 <span

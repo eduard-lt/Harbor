@@ -1,3 +1,4 @@
+use crate::commands::settings::{internal_start_service, internal_stop_service};
 use crate::state::AppState;
 use harbor_core::downloads::{load_downloads_config, DownloadsConfig};
 use harbor_core::types::Rule;
@@ -114,6 +115,18 @@ fn save_config(state: &AppState, config: &DownloadsConfig) -> Result<(), String>
     Ok(())
 }
 
+fn restart_service_if_running(state: &AppState) -> Result<(), String> {
+    let flag_guard = state.watcher_flag.lock().map_err(|e| e.to_string())?;
+    let is_running = flag_guard.is_some();
+    drop(flag_guard);
+
+    if is_running {
+        internal_stop_service(state)?;
+        internal_start_service(state)?;
+    }
+    Ok(())
+}
+
 #[tauri::command]
 pub async fn get_rules(state: State<'_, AppState>) -> Result<Vec<RuleDto>, String> {
     let config = state.config.read().map_err(|e| e.to_string())?;
@@ -132,37 +145,42 @@ pub async fn create_rule(
     create_symlink: Option<bool>,
     enabled: Option<bool>,
 ) -> Result<RuleDto, String> {
-    let mut config = state.config.write().map_err(|e| e.to_string())?;
+    let new_rule = {
+        let mut config = state.config.write().map_err(|e| e.to_string())?;
 
-    // Check if rule with this name already exists
-    if config.rules.iter().any(|r| r.name == name) {
-        return Err(format!("Rule with name '{}' already exists", name));
-    }
+        // Check if rule with this name already exists
+        if config.rules.iter().any(|r| r.name == name) {
+            return Err(format!("Rule with name '{}' already exists", name));
+        }
 
-    // Convert extensions: remove leading dots if present
-    let extensions: Vec<String> = extensions
-        .into_iter()
-        .map(|e| e.trim_start_matches('.').to_string())
-        .filter(|e| !e.is_empty())
-        .collect();
+        // Convert extensions: remove leading dots if present
+        let extensions: Vec<String> = extensions
+            .into_iter()
+            .map(|e| e.trim_start_matches('.').to_string())
+            .filter(|e| !e.is_empty())
+            .collect();
 
-    let new_rule = Rule {
-        name: name.clone(),
-        extensions: if extensions.is_empty() {
-            None
-        } else {
-            Some(extensions)
-        },
-        pattern,
-        min_size_bytes,
-        max_size_bytes,
-        target_dir: destination,
-        create_symlink,
-        enabled,
+        let rule = Rule {
+            name: name.clone(),
+            extensions: if extensions.is_empty() {
+                None
+            } else {
+                Some(extensions)
+            },
+            pattern,
+            min_size_bytes,
+            max_size_bytes,
+            target_dir: destination,
+            create_symlink,
+            enabled,
+        };
+
+        config.rules.push(rule.clone());
+        save_config(&state, &config)?;
+        rule
     };
 
-    config.rules.push(new_rule.clone());
-    save_config(&state, &config)?;
+    restart_service_if_running(&state)?;
 
     Ok(RuleDto::from(&new_rule))
 }
@@ -180,62 +198,70 @@ pub async fn update_rule(
     create_symlink: Option<bool>,
     enabled: Option<bool>,
 ) -> Result<RuleDto, String> {
-    let mut config = state.config.write().map_err(|e| e.to_string())?;
+    let updated = {
+        let mut config = state.config.write().map_err(|e| e.to_string())?;
 
-    let rule = config
-        .rules
-        .iter_mut()
-        .find(|r| r.name == id)
-        .ok_or_else(|| format!("Rule '{}' not found", id))?;
+        let rule = config
+            .rules
+            .iter_mut()
+            .find(|r| r.name == id)
+            .ok_or_else(|| format!("Rule '{}' not found", id))?;
 
-    if let Some(new_name) = name {
-        rule.name = new_name;
-    }
-    if let Some(exts) = extensions {
-        let exts: Vec<String> = exts
-            .into_iter()
-            .map(|e| e.trim_start_matches('.').to_string())
-            .filter(|e| !e.is_empty())
-            .collect();
-        rule.extensions = if exts.is_empty() { None } else { Some(exts) };
-    }
-    if let Some(dest) = destination {
-        rule.target_dir = dest;
-    }
-    if pattern.is_some() {
-        rule.pattern = pattern;
-    }
-    if min_size_bytes.is_some() {
-        rule.min_size_bytes = min_size_bytes;
-    }
-    if max_size_bytes.is_some() {
-        rule.max_size_bytes = max_size_bytes;
-    }
-    if let Some(symlink) = create_symlink {
-        rule.create_symlink = Some(symlink);
-    }
-    if let Some(en) = enabled {
-        rule.enabled = Some(en);
-    }
+        if let Some(new_name) = name {
+            rule.name = new_name;
+        }
+        if let Some(exts) = extensions {
+            let exts: Vec<String> = exts
+                .into_iter()
+                .map(|e| e.trim_start_matches('.').to_string())
+                .filter(|e| !e.is_empty())
+                .collect();
+            rule.extensions = if exts.is_empty() { None } else { Some(exts) };
+        }
+        if let Some(dest) = destination {
+            rule.target_dir = dest;
+        }
+        if pattern.is_some() {
+            rule.pattern = pattern;
+        }
+        if min_size_bytes.is_some() {
+            rule.min_size_bytes = min_size_bytes;
+        }
+        if max_size_bytes.is_some() {
+            rule.max_size_bytes = max_size_bytes;
+        }
+        if let Some(symlink) = create_symlink {
+            rule.create_symlink = Some(symlink);
+        }
+        if let Some(en) = enabled {
+            rule.enabled = Some(en);
+        }
 
-    let updated = RuleDto::from(&*rule);
-    save_config(&state, &config)?;
+        let updated = RuleDto::from(&*rule);
+        save_config(&state, &config)?;
+        updated
+    };
+
+    restart_service_if_running(&state)?;
 
     Ok(updated)
 }
 
 #[tauri::command]
 pub async fn delete_rule(state: State<'_, AppState>, rule_name: String) -> Result<(), String> {
-    let mut config = state.config.write().map_err(|e| e.to_string())?;
+    {
+        let mut config = state.config.write().map_err(|e| e.to_string())?;
 
-    let original_len = config.rules.len();
-    config.rules.retain(|r| r.name != rule_name);
+        let original_len = config.rules.len();
+        config.rules.retain(|r| r.name != rule_name);
 
-    if config.rules.len() == original_len {
-        return Err(format!("Rule '{}' not found", rule_name));
+        if config.rules.len() == original_len {
+            return Err(format!("Rule '{}' not found", rule_name));
+        }
+
+        save_config(&state, &config)?;
     }
-
-    save_config(&state, &config)?;
+    restart_service_if_running(&state)?;
     Ok(())
 }
 
@@ -245,16 +271,19 @@ pub async fn toggle_rule(
     rule_name: String,
     enabled: bool,
 ) -> Result<(), String> {
-    let mut config = state.config.write().map_err(|e| e.to_string())?;
+    {
+        let mut config = state.config.write().map_err(|e| e.to_string())?;
 
-    let rule = config
-        .rules
-        .iter_mut()
-        .find(|r| r.name == rule_name)
-        .ok_or_else(|| format!("Rule '{}' not found", rule_name))?;
+        let rule = config
+            .rules
+            .iter_mut()
+            .find(|r| r.name == rule_name)
+            .ok_or_else(|| format!("Rule '{}' not found", rule_name))?;
 
-    rule.enabled = Some(enabled);
-    save_config(&state, &config)?;
+        rule.enabled = Some(enabled);
+        save_config(&state, &config)?;
+    }
+    restart_service_if_running(&state)?;
 
     Ok(())
 }
@@ -264,26 +293,29 @@ pub async fn reorder_rules(
     state: State<'_, AppState>,
     rule_names: Vec<String>,
 ) -> Result<(), String> {
-    let mut config = state.config.write().map_err(|e| e.to_string())?;
+    {
+        let mut config = state.config.write().map_err(|e| e.to_string())?;
 
-    // Reorder rules based on the provided order
-    let mut new_rules: Vec<Rule> = Vec::with_capacity(rule_names.len());
+        // Reorder rules based on the provided order
+        let mut new_rules: Vec<Rule> = Vec::with_capacity(rule_names.len());
 
-    for name in &rule_names {
-        if let Some(rule) = config.rules.iter().find(|r| &r.name == name).cloned() {
-            new_rules.push(rule);
+        for name in &rule_names {
+            if let Some(rule) = config.rules.iter().find(|r| &r.name == name).cloned() {
+                new_rules.push(rule);
+            }
         }
-    }
 
-    // Add any rules that weren't in the provided list (shouldn't happen, but safety first)
-    for rule in &config.rules {
-        if !rule_names.contains(&rule.name) {
-            new_rules.push(rule.clone());
+        // Add any rules that weren't in the provided list (shouldn't happen, but safety first)
+        for rule in &config.rules {
+            if !rule_names.contains(&rule.name) {
+                new_rules.push(rule.clone());
+            }
         }
-    }
 
-    config.rules = new_rules;
-    save_config(&state, &config)?;
+        config.rules = new_rules;
+        save_config(&state, &config)?;
+    }
+    restart_service_if_running(&state)?;
 
     Ok(())
 }

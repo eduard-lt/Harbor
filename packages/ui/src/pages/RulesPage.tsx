@@ -3,6 +3,7 @@ import { Header } from '../components/Header';
 import { StatCard } from '../components/StatCard';
 import { useRules } from '../hooks/useRules';
 import { RuleModal } from '../components/RuleModal';
+import { ConfirmationModal } from '../components/ConfirmationModal';
 import type { Rule } from '../lib/tauri';
 
 const iconColorClassesLight: Record<string, string> = {
@@ -22,6 +23,7 @@ export function RulesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<Rule | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const handleCreate = async (ruleData: Omit<Rule, 'id' | 'icon' | 'icon_color'>) => {
     await addRule(ruleData);
@@ -40,6 +42,17 @@ export function RulesPage() {
   const openEditModal = (rule: Rule) => {
     setEditingRule(rule);
     setIsModalOpen(true);
+  };
+
+  const handleDeleteClick = (ruleId: string) => {
+    setDeleteTarget(ruleId);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deleteTarget) {
+      await removeRule(deleteTarget);
+      setDeleteTarget(null);
+    }
   };
 
   const filteredRules = rules.filter(r =>
@@ -170,11 +183,7 @@ export function RulesPage() {
                             <span className="material-icons-round text-xl">edit</span>
                           </button>
                           <button
-                            onClick={() => {
-                              if (confirm('Are you sure you want to delete this rule?')) {
-                                removeRule(rule.id);
-                              }
-                            }}
+                            onClick={() => handleDeleteClick(rule.id)}
                             className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-md transition-colors"
                           >
                             <span className="material-icons-round text-xl">delete_outline</span>
@@ -203,6 +212,16 @@ export function RulesPage() {
         onClose={() => setIsModalOpen(false)}
         onSave={editingRule ? handleUpdate : handleCreate}
         initialData={editingRule}
+      />
+
+      <ConfirmationModal
+        isOpen={!!deleteTarget}
+        title="Delete Rule"
+        message="Are you sure you want to delete this rule? This action cannot be undone."
+        confirmLabel="Delete"
+        isDestructive={true}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTarget(null)}
       />
     </>
   );
