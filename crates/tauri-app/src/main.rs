@@ -3,8 +3,7 @@
 mod commands;
 mod state;
 
-use harbor_core::downloads::{default_config, load_downloads_config, DownloadsConfig};
-use harbor_core::types::Rule;
+use harbor_core::downloads::{default_config, load_downloads_config};
 
 use state::AppState;
 use std::path::PathBuf;

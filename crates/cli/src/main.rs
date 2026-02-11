@@ -90,12 +90,17 @@ fn main() -> Result<()> {
         } => {
             let cfg = harbor_core::downloads::load_downloads_config(&path)?;
             let should_continue = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(true));
-            harbor_core::downloads::watch_polling(&cfg, interval_secs, &should_continue, |actions| {
-                for (from, to, rule, symlink_info) in actions {
-                    let sym = symlink_info.as_deref().unwrap_or_default();
-                    println!("{} -> {} ({}) {}", from.display(), to.display(), rule, sym);
-                }
-            })?;
+            harbor_core::downloads::watch_polling(
+                &cfg,
+                interval_secs,
+                &should_continue,
+                |actions| {
+                    for (from, to, rule, symlink_info) in actions {
+                        let sym = symlink_info.as_deref().unwrap_or_default();
+                        println!("{} -> {} ({}) {}", from.display(), to.display(), rule, sym);
+                    }
+                },
+            )?;
             Ok(())
         }
         Commands::Validate { path } => {
