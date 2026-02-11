@@ -3,9 +3,11 @@ import { Header } from '../components/Header';
 import { useSettings } from '../hooks/useSettings';
 import { useState } from 'react';
 import { ConfirmationModal } from '../components/ConfirmationModal';
+import { useWindowSize } from '../hooks/useWindowSize';
 
 export function SettingsPage() {
   const { theme, setTheme } = useTheme();
+  const { currentSize, setSize, presets } = useWindowSize();
   const {
     serviceStatus,
     startupEnabled,
@@ -223,6 +225,43 @@ export function SettingsPage() {
                     Reload
                   </button>
                 </div>
+              </div>
+            </section>
+
+            {/* Window Size */}
+            <section className="mb-8">
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center">
+                <span className="material-icons-round mr-2 text-primary">aspect_ratio</span>
+                Window Size
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {presets.map((size) => {
+                  const isActive = currentSize?.width === size.width && currentSize?.height === size.height;
+                  return (
+                    <button
+                      key={size.label}
+                      onClick={() => {
+                        setSize(size);
+                        setFeedbackMessage(`Resized to ${size.width}x${size.height}`);
+                        setTimeout(() => setFeedbackMessage(null), 3000);
+                      }}
+                      className={`flex flex-col items-center justify-center p-4 rounded-lg border transition-all group ${isActive
+                          ? 'bg-slate-50 dark:bg-slate-800 border-primary dark:border-primary ring-1 ring-primary'
+                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-primary dark:hover:border-primary hover:bg-slate-50 dark:hover:bg-slate-800'
+                        }`}
+                    >
+                      <span className={`text-sm font-bold mb-1 ${isActive ? 'text-primary' : 'text-slate-700 dark:text-slate-300 group-hover:text-primary'}`}>
+                        {size.label}
+                      </span>
+                      <span className="text-xs text-slate-500 font-mono">{size.width} x {size.height}</span>
+                      {isActive && (
+                        <span className="mt-2 text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                          Active
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </section>
 

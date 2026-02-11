@@ -23,11 +23,34 @@ function GlobalNavigationListener() {
   return null;
 }
 
+function GlobalContextMenuListener() {
+  useEffect(() => {
+    const handleContextMenu = (e: MouseEvent) => {
+      if (process.env.NODE_ENV === 'production') {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener('contextmenu', handleContextMenu);
+    return () => {
+      document.removeEventListener('contextmenu', handleContextMenu);
+    };
+  }, []);
+
+  return null;
+}
+
+import { useWindowSize } from './hooks/useWindowSize';
+
 function App() {
+  // Initialize window size persistence
+  useWindowSize();
+
   return (
     <ThemeProvider>
       <BrowserRouter>
         <GlobalNavigationListener />
+        <GlobalContextMenuListener />
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<ActivityLogsPage />} />

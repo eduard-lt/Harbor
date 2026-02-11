@@ -48,6 +48,16 @@ fn main() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+        }))
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            Some(vec!["--minimized"]),
+        ))
         .manage(app_state)
         .invoke_handler(tauri::generate_handler![
             // Rules commands
@@ -85,6 +95,26 @@ fn main() {
             use tauri::image::Image;
             use tauri::menu::{CheckMenuItemBuilder, MenuBuilder, MenuItemBuilder};
             use tauri::tray::{MouseButton, TrayIconBuilder, TrayIconEvent};
+            use tauri_plugin_autostart::ManagerExt;
+
+            // --- AutoStart Logic ---
+            let autostart_manager = app.autolaunch();
+            if !autostart_manager.is_enabled().unwrap_or(false) {
+                let _ = autostart_manager.enable();
+            }
+
+            // --- Smart Visibility Logic ---
+            let args: Vec<String> = std::env::args().collect();
+            let is_minimized_launch = args.contains(&"--minimized".to_string());
+
+            if let Some(window) = app.get_webview_window("main") {
+                if is_minimized_launch {
+                    let _ = window.hide();
+                } else {
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                }
+            }
 
             // Load _h icon
             let icon_bytes = include_bytes!("../../../assets/icon_h.ico");

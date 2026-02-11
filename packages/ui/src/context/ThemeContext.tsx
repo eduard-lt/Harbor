@@ -14,7 +14,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
     const stored = localStorage.getItem('harbor-theme') as Theme;
-    return stored || 'light';
+    return stored || 'system';
   });
 
   const [isDark, setIsDark] = useState(false);
