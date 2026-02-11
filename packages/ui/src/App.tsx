@@ -4,6 +4,7 @@ import { Layout } from './components/Layout';
 import { ActivityLogsPage } from './pages/ActivityLogsPage';
 import { RulesPage } from './pages/RulesPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { InfoPage } from './pages/InfoPage';
 import { useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event';
 
@@ -53,9 +54,10 @@ function App() {
         <GlobalContextMenuListener />
         <Routes>
           <Route path="/" element={<Layout />}>
-            <Route index element={<ActivityLogsPage />} />
-            <Route path="rules" element={<RulesPage />} />
+            <Route index element={<RulesPage />} />
+            <Route path="activity" element={<ActivityLogsPage />} />
             <Route path="settings" element={<SettingsPage />} />
+            <Route path="info" element={<InfoPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

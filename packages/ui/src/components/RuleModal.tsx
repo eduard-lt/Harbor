@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { Rule } from '../lib/tauri';
+import { open } from '@tauri-apps/plugin-dialog';
 
 interface RuleModalProps {
     isOpen: boolean;
@@ -36,6 +37,22 @@ export function RuleModal({ isOpen, onClose, onSave, initialData }: RuleModalPro
         setPattern('');
         setCreateSymlink(false);
         setError(null);
+    };
+
+    const handleBrowse = async () => {
+        try {
+            const selected = await open({
+                directory: true,
+                multiple: false,
+                defaultPath: destination || undefined,
+            });
+
+            if (selected) {
+                setDestination(selected as string);
+            }
+        } catch (err) {
+            console.error('Failed to open dialog:', err);
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -123,14 +140,24 @@ export function RuleModal({ isOpen, onClose, onSave, initialData }: RuleModalPro
                         <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
                             Destination Folder
                         </label>
-                        <input
-                            type="text"
-                            value={destination}
-                            onChange={(e) => setDestination(e.target.value)}
-                            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all dark:text-white font-mono text-sm"
-                            placeholder="C:\Users\Name\Pictures"
-                            required
-                        />
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                value={destination}
+                                onChange={(e) => setDestination(e.target.value)}
+                                className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all dark:text-white font-mono text-sm"
+                                placeholder="C:\Users\Name\Pictures"
+                                required
+                            />
+                            <button
+                                type="button"
+                                onClick={handleBrowse}
+                                className="px-3 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                                title="Browse Folder"
+                            >
+                                <span className="material-icons-round">folder_open</span>
+                            </button>
+                        </div>
                         <p className="text-xs text-slate-500 mt-1">
                             Absolute path to move files to. Supports %USERPROFILE%.
                         </p>

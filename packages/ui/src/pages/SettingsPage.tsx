@@ -246,8 +246,8 @@ export function SettingsPage() {
                         setTimeout(() => setFeedbackMessage(null), 3000);
                       }}
                       className={`flex flex-col items-center justify-center p-4 rounded-lg border transition-all group ${isActive
-                          ? 'bg-slate-50 dark:bg-slate-800 border-primary dark:border-primary ring-1 ring-primary'
-                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-primary dark:hover:border-primary hover:bg-slate-50 dark:hover:bg-slate-800'
+                        ? 'bg-slate-50 dark:bg-slate-800 border-primary dark:border-primary ring-1 ring-primary'
+                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-primary dark:hover:border-primary hover:bg-slate-50 dark:hover:bg-slate-800'
                         }`}
                     >
                       <span className={`text-sm font-bold mb-1 ${isActive ? 'text-primary' : 'text-slate-700 dark:text-slate-300 group-hover:text-primary'}`}>
@@ -264,6 +264,7 @@ export function SettingsPage() {
                 })}
               </div>
             </section>
+
 
             {/* Factory Reset */}
             <section className="mt-12 pt-8 border-t border-slate-200 dark:border-slate-800">
@@ -284,14 +285,8 @@ export function SettingsPage() {
             </section>
           </div>
 
-          {/* Footer */}
-          <footer className="mt-20 flex items-center justify-between text-slate-400 text-xs">
-            <p>&copy; 2024 Harbor Utility. All rights reserved.</p>
-            <div className="flex space-x-4">
-              <a className="hover:text-primary transition-colors" href="https://github.com/Eduard2609/Harbor" target="_blank" rel="noreferrer">GitHub</a>
-            </div>
-          </footer>
         </div>
+        <p className="text-center text-slate-400 text-xs mt-12 mb-4">&copy; 2024 Harbor Utility. All rights reserved.</p>
       </div>
 
       {feedbackMessage && (
