@@ -139,3 +139,51 @@ pub fn status(state_path: impl AsRef<Path>) -> Result<Vec<(String, i32, bool)>> 
     }
     Ok(res)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::Service;
+
+    fn make_service(name: &str, depends_on: Vec<&str>) -> Service {
+        Service {
+            name: name.to_string(),
+            command: "echo".to_string(),
+            cwd: None,
+            env: None,
+            depends_on: Some(depends_on.into_iter().map(|s| s.to_string()).collect()),
+            health_check: None,
+        }
+    }
+
+    #[test]
+    fn test_topo_order_basic() {
+        let s1 = make_service("db", vec![]);
+        let s2 = make_service("backend", vec!["db"]);
+        let s3 = make_service("frontend", vec!["backend"]);
+        let services = vec![s1, s2, s3];
+
+        let order = topo_order(&services).unwrap();
+        assert_eq!(order, vec!["db".to_string(), "backend".to_string(), "frontend".to_string()]);
+    }
+
+    #[test]
+    fn test_topo_order_independent() {
+        let s1 = make_service("a", vec![]);
+        let s2 = make_service("b", vec![]);
+        let services = vec![s1, s2];
+        let order = topo_order(&services).unwrap();
+        assert_eq!(order.len(), 2);
+        assert!(order.contains(&"a".to_string()));
+        assert!(order.contains(&"b".to_string()));
+    }
+
+    #[test]
+    fn test_topo_order_cycle() {
+        let s1 = make_service("a", vec!["b"]);
+        let s2 = make_service("b", vec!["a"]);
+        let services = vec![s1, s2];
+        let res = topo_order(&services);
+        assert!(res.is_err());
+    }
+}

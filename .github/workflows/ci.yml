@@ -72,6 +72,30 @@ jobs:
         run: cargo clippy --all-targets --all-features -- -D warnings
 
   # ============================================================================
+  # Frontend Tests
+  # ============================================================================
+  frontend-test:
+    name: Frontend Tests
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        working-directory: packages/ui
+        run: npm install
+
+      - name: Run Tests
+        working-directory: packages/ui
+        run: npm run test -- --run
+
+
+  # ============================================================================
   # Tests
   # ============================================================================
   test:
@@ -198,7 +222,7 @@ jobs:
   # ============================================================================
   ci-success:
     name: CI Success
-    needs: [format, clippy, test, build, audit]
+    needs: [format, clippy, test, frontend-test, build, audit]
     runs-on: windows-latest
     if: always()
     steps:
@@ -208,6 +232,7 @@ jobs:
           if ("${{ needs.format.result }}" -ne "success") { $failed += "format" }
           if ("${{ needs.clippy.result }}" -ne "success") { $failed += "clippy" }
           if ("${{ needs.test.result }}" -ne "success") { $failed += "test" }
+          if ("${{ needs.frontend-test.result }}" -ne "success") { $failed += "frontend-test" }
           if ("${{ needs.build.result }}" -ne "success") { $failed += "build" }
           if ("${{ needs.audit.result }}" -ne "success") { $failed += "audit" }
           

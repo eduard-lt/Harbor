@@ -82,3 +82,37 @@ pub fn wait_ready(hc: &HealthCheck) -> Result<()> {
     }
     bail!("not ready")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::{HealthCheck, HealthCheckKind};
+
+    #[test]
+    fn test_wait_ready_command_success() {
+        let cmd = if cfg!(windows) { "echo ok" } else { "true" };
+        let hc = HealthCheck {
+            kind: HealthCheckKind::Command,
+            command: Some(cmd.to_string()),
+            url: None,
+            tcp_port: None,
+            timeout_ms: Some(1000),
+            retries: Some(1),
+        };
+        assert!(wait_ready(&hc).is_ok());
+    }
+
+    #[test]
+    fn test_wait_ready_command_fail() {
+        let cmd = if cfg!(windows) { "exit 1" } else { "false" };
+        let hc = HealthCheck {
+            kind: HealthCheckKind::Command,
+            command: Some(cmd.to_string()),
+            url: None,
+            tcp_port: None,
+            timeout_ms: Some(100),
+            retries: Some(1),
+        };
+        assert!(wait_ready(&hc).is_err());
+    }
+}
