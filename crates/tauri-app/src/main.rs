@@ -75,12 +75,11 @@ fn main() {
             commands::get_config_path,
             commands::reset_to_defaults,
         ])
-        .on_window_event(|window, event| match event {
-            tauri::WindowEvent::CloseRequested { api, .. } => {
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 window.hide().unwrap();
                 api.prevent_close();
             }
-            _ => {}
         })
         .setup(|app| {
             use tauri::image::Image;
@@ -141,18 +140,18 @@ fn main() {
                 .icon(tray_icon)
                 .menu(&menu)
                 .show_menu_on_left_click(false)
-                .on_tray_icon_event(|tray, event| match event {
-                    TrayIconEvent::Click {
+                .on_tray_icon_event(|tray, event| {
+                    if let TrayIconEvent::Click {
                         button: MouseButton::Left,
                         ..
-                    } => {
+                    } = event
+                    {
                         let app = tray.app_handle();
                         if let Some(window) = app.get_webview_window("main") {
                             let _ = window.show();
                             let _ = window.set_focus();
                         }
                     }
-                    _ => {}
                 })
                 .on_menu_event(move |app, event| match event.id.as_ref() {
                     "quit" => {

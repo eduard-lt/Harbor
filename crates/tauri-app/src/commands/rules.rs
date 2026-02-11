@@ -134,6 +134,7 @@ pub async fn get_rules(state: State<'_, AppState>) -> Result<Vec<RuleDto>, Strin
 }
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 pub async fn create_rule(
     state: State<'_, AppState>,
     name: String,
@@ -186,6 +187,7 @@ pub async fn create_rule(
 }
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 pub async fn update_rule(
     state: State<'_, AppState>,
     id: String,

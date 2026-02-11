@@ -269,7 +269,7 @@ pub async fn reset_to_defaults(state: State<'_, AppState>) -> Result<(), String>
 
     // Save to disk
     if let Ok(yaml) = serde_yaml::to_string(&config) {
-        let _ = std::fs::write(&state.config_path, yaml)
+        std::fs::write(&state.config_path, yaml)
             .map_err(|e| format!("Failed to write config: {}", e))?;
     } else {
         return Err("Failed to serialize default config".to_string());

@@ -7,14 +7,6 @@ interface ActivityTableProps {
   totalPages?: number;
 }
 
-const iconColorClasses: Record<string, string> = {
-  blue: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
-  amber: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
-  purple: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400',
-  indigo: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400',
-  red: 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400',
-  slate: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400',
-};
 
 const statusClasses: Record<string, string> = {
   success: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400',

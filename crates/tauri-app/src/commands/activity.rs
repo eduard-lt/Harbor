@@ -137,7 +137,7 @@ pub async fn get_activity_logs(
     // Read all lines and parse them
     let mut all_logs: Vec<ActivityLogDto> = reader
         .lines()
-        .filter_map(|line| line.ok())
+        .map_while(Result::ok)
         .filter(|line| {
             !line.trim().is_empty()
                 && !line.starts_with("Recent Moves")
@@ -184,7 +184,7 @@ pub async fn get_activity_stats(state: State<'_, AppState>) -> Result<ActivitySt
         std::collections::HashMap::new();
     let mut total = 0;
 
-    for line in reader.lines().filter_map(|l| l.ok()) {
+    for line in reader.lines().map_while(Result::ok) {
         if line.trim().is_empty()
             || line.starts_with("Recent Moves")
             || line.starts_with("---")

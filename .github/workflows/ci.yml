@@ -68,6 +68,19 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-target-clippy-
 
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Frontend Dependencies
+        working-directory: packages/ui
+        run: npm install
+
+      - name: Build Frontend
+        working-directory: packages/ui
+        run: npm run build
+
       - name: Run clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
 
