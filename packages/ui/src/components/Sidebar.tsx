@@ -100,13 +100,10 @@ export function Sidebar() {
           </div>
         )}
 
-        {/* Separator Line */}
-        <div className="h-px bg-slate-200 dark:bg-slate-800 my-2"></div>
-
         {/* Service Toggle */}
         <div id="sidebar-service-toggle" className={`rounded-xl p-3 flex items-center justify-between group transition-all duration-300 ${serviceEnabled
-            ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-2 border-emerald-500/20 shadow-lg shadow-emerald-500/10'
-            : 'bg-slate-50 dark:bg-slate-800/50 border-2 border-transparent hover:border-slate-200 dark:hover:border-slate-700'
+          ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-2 border-emerald-500/20 shadow-lg shadow-emerald-500/10'
+          : 'bg-slate-50 dark:bg-slate-800/50 border-2 border-transparent hover:border-slate-200 dark:hover:border-slate-700'
           }`}>
           <div className="flex items-center gap-2 overflow-hidden">
             <div className={`w-2 h-2 rounded-full flex-shrink-0 ${serviceEnabled ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' : 'bg-slate-400'}`}></div>
@@ -132,6 +129,9 @@ export function Sidebar() {
             <div className="w-9 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
           </label>
         </div>
+
+        {/* Separator Line */}
+        <div className="h-px bg-slate-200 dark:bg-slate-800 my-2"></div>
 
         {/* External Links */}
         <div className="space-y-2">
