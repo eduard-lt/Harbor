@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Header } from '../components/Header';
 import { StatCard } from '../components/StatCard';
 import { useRules } from '../hooks/useRules';
 import { RuleModal } from '../components/RuleModal';
 import { ConfirmationModal } from '../components/ConfirmationModal';
+import { TutorialModal } from '../components/TutorialModal';
 import type { Rule } from '../lib/tauri';
 
 const iconColorClassesLight: Record<string, string> = {
@@ -24,6 +25,16 @@ export function RulesPage() {
   const [editingRule, setEditingRule] = useState<Rule | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  useEffect(() => {
+    const hasSeenTutorial = localStorage.getItem('hasSeenTutorial');
+    if (!hasSeenTutorial) {
+      // Small delay to ensure smooth entry animation
+      const timer = setTimeout(() => setShowTutorial(true), 500);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   const handleCreate = async (ruleData: Omit<Rule, 'id' | 'icon' | 'icon_color'>) => {
     await addRule(ruleData);
@@ -53,6 +64,11 @@ export function RulesPage() {
       await removeRule(deleteTarget);
       setDeleteTarget(null);
     }
+  };
+
+  const handleCloseTutorial = () => {
+    setShowTutorial(false);
+    localStorage.setItem('hasSeenTutorial', 'true');
   };
 
   const filteredRules = rules.filter(r =>
@@ -212,6 +228,11 @@ export function RulesPage() {
         onClose={() => setIsModalOpen(false)}
         onSave={editingRule ? handleUpdate : handleCreate}
         initialData={editingRule}
+      />
+
+      <TutorialModal
+        isOpen={showTutorial}
+        onClose={handleCloseTutorial}
       />
 
       <ConfirmationModal

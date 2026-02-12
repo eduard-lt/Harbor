@@ -43,8 +43,8 @@ fn main() {
 
     let app_state = AppState::new(cfg_path, config);
 
-    // Start service by default
-    let _ = commands::settings::internal_start_service(&app_state);
+    // Start service by default - CHANGED for v1.1.1: Default is OFF
+    // let _ = commands::settings::internal_start_service(&app_state);
 
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
