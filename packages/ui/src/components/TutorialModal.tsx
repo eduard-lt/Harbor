@@ -48,7 +48,7 @@ export function TutorialModal({ isOpen, onClose }: TutorialModalProps) {
                                 <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
                                     Harbor keeps your desktop and downloads folder organized automatically.
                                     <br /><br />
-                                    We've set up some default **Rules** for you to get started. You can customize them or add new ones right here.
+                                    We've set up some default <strong>Rules</strong> for you to get started. You can customize them or add new ones right here.
                                 </p>
                             </div>
                             <div className="pt-4 flex justify-end">
@@ -71,7 +71,7 @@ export function TutorialModal({ isOpen, onClose }: TutorialModalProps) {
                             <div>
                                 <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Ready to Launch?</h2>
                                 <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-                                    The background service is currently **Stopped** so you can review your rules first.
+                                    The background service is currently <strong className="text-slate-800 dark:text-white">Stopped</strong> so you can review your rules first.
                                     <br /><br />
                                     When you're ready, simply flip the switch in the sidebar to start organizing!
                                 </p>

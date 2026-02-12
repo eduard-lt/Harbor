@@ -49,11 +49,15 @@ export function Sidebar() {
       {/* Service Toggle & Footer Links */}
       <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-4">
         {/* Service Toggle */}
-        <div id="sidebar-service-toggle" className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3 flex items-center justify-between group">
+        <div id="sidebar-service-toggle" className={`rounded-xl p-3 flex items-center justify-between group transition-all duration-300 ${serviceEnabled
+          ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-2 border-emerald-500/20 shadow-lg shadow-emerald-500/10'
+          : 'bg-slate-50 dark:bg-slate-800/50 border-2 border-transparent hover:border-slate-200 dark:hover:border-slate-700'
+          }`}>
           <div className="flex items-center gap-2 overflow-hidden">
             <div className={`w-2 h-2 rounded-full flex-shrink-0 ${serviceEnabled ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' : 'bg-slate-400'}`}></div>
             <div className="flex flex-col min-w-0">
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate">
+              <span className={`text-xs font-bold truncate transition-colors ${serviceEnabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-200'
+                }`}>
                 {serviceEnabled ? 'Active' : 'Stopped'}
               </span>
               <span className="text-[10px] text-slate-500 truncate hidden lg:block">
