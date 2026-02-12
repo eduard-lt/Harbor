@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { open } from '@tauri-apps/plugin-shell';
 import { useSettings } from '../hooks/useSettings';
+import { useState, useEffect } from 'react';
 
 interface NavItem {
   to: string;
@@ -18,9 +19,37 @@ const navItems: NavItem[] = [
 export function Sidebar() {
   const { serviceStatus, toggleService, loading } = useSettings();
   const serviceEnabled = serviceStatus.running;
+  const [showCoachMark, setShowCoachMark] = useState(false);
+
+  useEffect(() => {
+    const hasSeen = localStorage.getItem('hasSeenServiceCoachMark');
+    // Show only if not seen and service is NOT running (to encourage starting it)
+    if (!hasSeen && !serviceEnabled) {
+      // Small delay for entrance
+      const timer = setTimeout(() => setShowCoachMark(true), 1000);
+      return () => clearTimeout(timer);
+    } else if (serviceEnabled) {
+      // If service is enabled, we can consider it "seen" or just hide it
+      if (showCoachMark) setShowCoachMark(false);
+      if (!hasSeen) localStorage.setItem('hasSeenServiceCoachMark', 'true');
+    }
+  }, [serviceEnabled, showCoachMark]);
+
+  const handleToggle = async () => {
+    if (showCoachMark) {
+      setShowCoachMark(false);
+      localStorage.setItem('hasSeenServiceCoachMark', 'true');
+    }
+    await toggleService();
+  };
+
+  const dismissCoachMark = () => {
+    setShowCoachMark(false);
+    localStorage.setItem('hasSeenServiceCoachMark', 'true');
+  };
 
   return (
-    <aside className="w-20 lg:w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col transition-all duration-300">
+    <aside className="w-20 lg:w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col transition-all duration-300 relative z-20">
       {/* Logo */}
       <div className="p-6 flex items-center gap-3">
         <img src="/harbor.svg" alt="Harbor" className="w-10 h-10 object-contain" />
@@ -47,11 +76,37 @@ export function Sidebar() {
       </nav>
 
       {/* Service Toggle & Footer Links */}
-      <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-4">
+      <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-4 relative">
+
+        {/* Coach Mark Badge */}
+        {showCoachMark && (
+          <div className="absolute -top-16 left-4 right-4 bg-primary text-white p-3 rounded-xl shadow-xl shadow-primary/20 animate-in slide-in-from-bottom-2 fade-in duration-500 z-50">
+            <div className="relative">
+              <div className="flex items-start gap-2">
+                <span className="material-icons-round text-sm mt-0.5">auto_awesome</span>
+                <p className="text-xs font-bold leading-tight">
+                  Start the app from here & forget about it!
+                </p>
+                <button
+                  onClick={dismissCoachMark}
+                  className="ml-auto -mt-1 -mr-1 text-white/70 hover:text-white"
+                >
+                  <span className="material-icons-round text-sm">close</span>
+                </button>
+              </div>
+              {/* Arrow pointing down */}
+              <div className="absolute -bottom-[20px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[8px] border-l-transparent border-t-[8px] border-t-primary border-r-[8px] border-r-transparent"></div>
+            </div>
+          </div>
+        )}
+
+        {/* Separator Line */}
+        <div className="h-px bg-slate-200 dark:bg-slate-800 my-2"></div>
+
         {/* Service Toggle */}
         <div id="sidebar-service-toggle" className={`rounded-xl p-3 flex items-center justify-between group transition-all duration-300 ${serviceEnabled
-          ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-2 border-emerald-500/20 shadow-lg shadow-emerald-500/10'
-          : 'bg-slate-50 dark:bg-slate-800/50 border-2 border-transparent hover:border-slate-200 dark:hover:border-slate-700'
+            ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-2 border-emerald-500/20 shadow-lg shadow-emerald-500/10'
+            : 'bg-slate-50 dark:bg-slate-800/50 border-2 border-transparent hover:border-slate-200 dark:hover:border-slate-700'
           }`}>
           <div className="flex items-center gap-2 overflow-hidden">
             <div className={`w-2 h-2 rounded-full flex-shrink-0 ${serviceEnabled ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' : 'bg-slate-400'}`}></div>
@@ -71,7 +126,7 @@ export function Sidebar() {
               type="checkbox"
               className="sr-only peer"
               checked={serviceEnabled}
-              onChange={toggleService}
+              onChange={handleToggle}
               disabled={loading}
             />
             <div className="w-9 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
