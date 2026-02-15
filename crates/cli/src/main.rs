@@ -159,7 +159,7 @@ fn execute_command(
             println!("{}", content);
             Ok(())
         }
-        Commands::TrayInstall { source } => tray_install(source, None),
+        Commands::TrayInstall { source } => tray_install(source, None, None),
         Commands::TrayUninstall => tray_uninstall(None),
     }
 }
@@ -182,7 +182,11 @@ fn init_config(path: &str) -> Result<()> {
 }
 
 #[cfg(windows)]
-fn tray_install(source: Option<String>, registry_path: Option<&str>) -> Result<()> {
+fn tray_install(
+    source: Option<String>,
+    registry_path: Option<&str>,
+    install_dir_override: Option<PathBuf>,
+) -> Result<()> {
     let src = if let Some(s) = source {
         PathBuf::from(s)
     } else {
@@ -201,16 +205,30 @@ fn tray_install(source: Option<String>, registry_path: Option<&str>) -> Result<(
 
     // In tests (when registry_path is provided), we skip the existence check if source is implicit,
     // or we check strictly if explicit.
-    let is_test = registry_path.is_some();
-    if !src.exists() && !is_test {
+    // Use install_dir_override to determine if we are in a "full install" test mode
+    let is_test_registry = registry_path.is_some();
+    let is_test_files = install_dir_override.is_some();
+
+    // If we are testing files, we MUST have a valid source
+    if !src.exists() && !is_test_registry {
+        anyhow::bail!("source not found: {}", src.display());
+    }
+    if !src.exists() && is_test_files {
+        // For file tests, we create a dummy source if it doesn't exist?
+        // Or expect the caller to provide a valid source.
+        // Let's rely on caller providing valid source or it failing.
         anyhow::bail!("source not found: {}", src.display());
     }
 
-    let install_dir = std::env::var("LOCALAPPDATA")
-        .map(|p| PathBuf::from(p).join("Harbor"))
-        .unwrap_or(PathBuf::from("C:\\Harbor"));
+    let install_dir = if let Some(d) = install_dir_override {
+        d
+    } else {
+        std::env::var("LOCALAPPDATA")
+            .map(|p| PathBuf::from(p).join("Harbor"))
+            .unwrap_or(PathBuf::from("C:\\Harbor"))
+    };
 
-    if !is_test {
+    if !is_test_registry || is_test_files {
         std::fs::create_dir_all(&install_dir)?;
         let dest = install_dir.join("harbor-tray.exe");
         std::fs::copy(&src, &dest)?;
@@ -251,7 +269,11 @@ fn tray_install(source: Option<String>, registry_path: Option<&str>) -> Result<(
 }
 
 #[cfg(not(windows))]
-fn tray_install(_source: Option<String>, _registry_path: Option<&str>) -> Result<()> {
+fn tray_install(
+    _source: Option<String>,
+    _registry_path: Option<&str>,
+    _install_dir_override: Option<PathBuf>,
+) -> Result<()> {
     anyhow::bail!("windows only");
 }
 
@@ -497,7 +519,7 @@ services:
     fn test_tray_install_uninstall() {
         let test_reg_path = "Software\\HarborTest";
         // Install
-        assert!(tray_install(None, Some(test_reg_path)).is_ok());
+        assert!(tray_install(None, Some(test_reg_path), None).is_ok());
 
         let hkcu = RegKey::predef(HKEY_CURRENT_USER);
         let key = hkcu.open_subkey(test_reg_path).unwrap();
@@ -510,6 +532,32 @@ services:
         assert!(val.is_err());
 
         // Cleanup
+        let _ = hkcu.delete_subkey(test_reg_path);
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn test_tray_install_files() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let install_dir = temp.path().join("Install");
+        let source_dir = temp.path().join("Source");
+        std::fs::create_dir(&source_dir).unwrap();
+        let source_exe = source_dir.join("harbor-tray.exe");
+        std::fs::write(&source_exe, "dummy content").unwrap();
+
+        let test_reg_path = "Software\\HarborTestFiles";
+
+        assert!(tray_install(
+            Some(source_exe.to_str().unwrap().to_string()),
+            Some(test_reg_path),
+            Some(install_dir.clone())
+        )
+        .is_ok());
+
+        assert!(install_dir.join("harbor-tray.exe").exists());
+
+        // Cleanup registry
+        let hkcu = RegKey::predef(HKEY_CURRENT_USER);
         let _ = hkcu.delete_subkey(test_reg_path);
     }
 }

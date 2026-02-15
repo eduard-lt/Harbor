@@ -461,10 +461,9 @@ mod tests {
     #[tokio::test]
     async fn test_create_rule() {
         let (state, _tmp) = create_test_state();
-        let state = State::from(&state); // Wrap in tauri::State
 
-        let rule = create_rule(
-            state.clone(),
+        let rule = impl_create_rule(
+            &state,
             "New Rule".to_string(),
             vec!["txt".to_string()],
             "Target".to_string(),
@@ -481,13 +480,13 @@ mod tests {
         assert_eq!(rule.name, "New Rule");
 
         // Verify it's in config
-        let rules = get_rules(state.clone()).await.unwrap();
+        let rules = impl_get_rules(&state).await.unwrap();
         assert_eq!(rules.len(), 1);
         assert_eq!(rules[0].name, "New Rule");
 
         // Duplicate name should fail
-        let res = create_rule(
-            state.clone(),
+        let res = impl_create_rule(
+            &state,
             "New Rule".to_string(),
             vec!["txt".to_string()],
             "Target".to_string(),
@@ -504,10 +503,9 @@ mod tests {
     #[tokio::test]
     async fn test_update_rule() {
         let (state, _tmp) = create_test_state();
-        let state = State::from(&state);
 
-        let _ = create_rule(
-            state.clone(),
+        let _ = impl_create_rule(
+            &state,
             "Rule1".to_string(),
             vec!["txt".to_string()],
             "Target".to_string(),
@@ -520,8 +518,8 @@ mod tests {
         .await
         .unwrap();
 
-        let updated = update_rule(
-            state.clone(),
+        let updated = impl_update_rule(
+            &state,
             "Rule1".to_string(),
             Some("Rule1_Updated".to_string()),
             Some(vec!["md".to_string()]),
@@ -541,7 +539,7 @@ mod tests {
         assert!(u.extensions.contains(&".md".to_string()));
 
         // Verify config
-        let rules = get_rules(state.clone()).await.unwrap();
+        let rules = impl_get_rules(&state).await.unwrap();
         assert_eq!(rules.len(), 1);
         assert_eq!(rules[0].name, "Rule1_Updated");
     }
@@ -549,10 +547,9 @@ mod tests {
     #[tokio::test]
     async fn test_delete_rule() {
         let (state, _tmp) = create_test_state();
-        let state = State::from(&state);
 
-        create_rule(
-            state.clone(),
+        impl_create_rule(
+            &state,
             "To Delete".to_string(),
             vec![],
             "".to_string(),
@@ -565,24 +562,23 @@ mod tests {
         .await
         .unwrap();
 
-        let res = delete_rule(state.clone(), "To Delete".to_string()).await;
+        let res = impl_delete_rule(&state, "To Delete".to_string()).await;
         assert!(res.is_ok());
 
-        let rules = get_rules(state.clone()).await.unwrap();
+        let rules = impl_get_rules(&state).await.unwrap();
         assert!(rules.is_empty());
 
         // Delete non-existent
-        let res = delete_rule(state.clone(), "NonExistent".to_string()).await;
+        let res = impl_delete_rule(&state, "NonExistent".to_string()).await;
         assert!(res.is_err());
     }
 
     #[tokio::test]
     async fn test_toggle_rule() {
         let (state, _tmp) = create_test_state();
-        let state = State::from(&state);
 
-        create_rule(
-            state.clone(),
+        impl_create_rule(
+            &state,
             "ToggleMe".to_string(),
             vec![],
             "".to_string(),
@@ -595,21 +591,20 @@ mod tests {
         .await
         .unwrap();
 
-        toggle_rule(state.clone(), "ToggleMe".to_string(), false)
+        impl_toggle_rule(&state, "ToggleMe".to_string(), false)
             .await
             .unwrap();
 
-        let rules = get_rules(state.clone()).await.unwrap();
+        let rules = impl_get_rules(&state).await.unwrap();
         assert!(!rules[0].enabled);
     }
 
     #[tokio::test]
     async fn test_reorder_rules() {
         let (state, _tmp) = create_test_state();
-        let state = State::from(&state);
 
-        create_rule(
-            state.clone(),
+        impl_create_rule(
+            &state,
             "A".into(),
             vec![],
             "".into(),
@@ -621,8 +616,8 @@ mod tests {
         )
         .await
         .unwrap();
-        create_rule(
-            state.clone(),
+        impl_create_rule(
+            &state,
             "B".into(),
             vec![],
             "".into(),
@@ -634,8 +629,8 @@ mod tests {
         )
         .await
         .unwrap();
-        create_rule(
-            state.clone(),
+        impl_create_rule(
+            &state,
             "C".into(),
             vec![],
             "".into(),
@@ -649,9 +644,9 @@ mod tests {
         .unwrap();
 
         let order = vec!["C".to_string(), "A".to_string(), "B".to_string()];
-        reorder_rules(state.clone(), order).await.unwrap();
+        impl_reorder_rules(&state, order).await.unwrap();
 
-        let rules = get_rules(state.clone()).await.unwrap();
+        let rules = impl_get_rules(&state).await.unwrap();
         assert_eq!(rules[0].name, "C");
         assert_eq!(rules[1].name, "A");
         assert_eq!(rules[2].name, "B");
