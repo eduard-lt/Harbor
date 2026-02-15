@@ -2,8 +2,8 @@
 # Usage: .\tools\version.ps1 [show|bump-patch|bump-minor|bump-major]
 
 param(
-    [Parameter(Position=0)]
-    [ValidateSet("show", "bump-patch", "bump-minor", "bump-major")]
+    [Parameter(Position = 0)]
+    [ValidateSet("show", "refresh", "bump-patch", "bump-minor", "bump-major")]
     [string]$Action = "show"
 )
 
@@ -19,6 +19,32 @@ function Get-Version {
     throw "Version not found in Cargo.toml"
 }
 
+
+function Update-Poe-Help {
+    param([string]$CurrentVersion)
+    
+    $parts = $CurrentVersion -split '\.'
+    $major = [int]$parts[0]
+    $minor = [int]$parts[1]
+    $patch = [int]$parts[2]
+    
+    $nextPatch = "$major.$minor.$($patch + 1)"
+    $nextMinor = "$major.$($minor + 1).0"
+    $nextMajor = "$($major + 1).0.0"
+    
+    $content = Get-Content $PyProjectToml -Raw
+    
+    # Update bump-patch help
+    $content = $content -replace 'help = "Bump patch version \(.*?\)"', "help = `"Bump patch version ($CurrentVersion -> $nextPatch)`""
+    # Update bump-minor help
+    $content = $content -replace 'help = "Bump minor version \(.*?\)"', "help = `"Bump minor version ($CurrentVersion -> $nextMinor)`""
+    # Update bump-major help
+    $content = $content -replace 'help = "Bump major version \(.*?\)"', "help = `"Bump major version ($CurrentVersion -> $nextMajor)`""
+    
+    Set-Content $PyProjectToml $content -NoNewline
+    Write-Host "  - pyproject.toml (updated help strings)" -ForegroundColor Gray
+}
+
 function Set-Version {
     param([string]$NewVersion)
     
@@ -27,14 +53,35 @@ function Set-Version {
     $cargoContent = $cargoContent -replace '(version\s*=\s*")[^"]+(")', "`${1}$NewVersion`$2"
     Set-Content $CargoToml $cargoContent -NoNewline
     
-    # Update pyproject.toml
+    # Update pyproject.toml (version field)
     $pyContent = Get-Content $PyProjectToml -Raw
     $pyContent = $pyContent -replace '(version\s*=\s*")[^"]+(")', "`${1}$NewVersion`$2"
     Set-Content $PyProjectToml $pyContent -NoNewline
     
     Write-Host "Updated version to $NewVersion" -ForegroundColor Green
     Write-Host "  - Cargo.toml (workspace)" -ForegroundColor Gray
-    Write-Host "  - pyproject.toml" -ForegroundColor Gray
+    Write-Host "  - pyproject.toml (version)" -ForegroundColor Gray
+
+    # Update InfoPage.tsx
+    $InfoPage = Join-Path $RootDir "packages\ui\src\pages\InfoPage.tsx"
+    if (Test-Path $InfoPage) {
+        $infoContent = Get-Content $InfoPage -Raw
+        # Replace "Version X.Y.Z" with "Version $NewVersion"
+        if ($infoContent -match 'Version \d+\.\d+\.\d+') {
+            $infoContent = $infoContent -replace 'Version \d+\.\d+\.\d+', "Version $NewVersion"
+            Set-Content $InfoPage $infoContent -NoNewline
+            Write-Host "  - packages\ui\src\pages\InfoPage.tsx" -ForegroundColor Gray
+        }
+        else {
+            Write-Host "  ! Version string not found in InfoPage.tsx" -ForegroundColor Yellow
+        }
+    }
+    else {
+        Write-Host "  ! InfoPage.tsx not found" -ForegroundColor Yellow
+    }
+
+    # Update Poe help strings
+    Update-Poe-Help $NewVersion
 }
 
 function Bump-Version {
@@ -72,6 +119,11 @@ switch ($Action) {
     "show" {
         $version = Get-Version
         Write-Host "Current version: $version" -ForegroundColor Cyan
+    }
+    "refresh" {
+        $version = Get-Version
+        Write-Host "Refreshing version info for: $version" -ForegroundColor Cyan
+        Update-Poe-Help $version
     }
     "bump-patch" {
         Bump-Version "patch"

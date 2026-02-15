@@ -96,14 +96,14 @@ export function RulesPage() {
         </div>
         <button
           onClick={openCreateModal}
-          className="bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 transition-all shadow-lg shadow-primary/10"
+          className="bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 transition-all shadow-lg shadow-primary/10 cursor-pointer"
         >
           <span className="material-icons-round text-lg">add</span>
           New Rule
         </button>
       </Header>
 
-      <div className="p-8 max-w-7xl mx-auto w-full overflow-auto">
+      <div className="p-12 max-w-7xl mx-auto w-full overflow-auto">
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <StatCard
@@ -194,13 +194,13 @@ export function RulesPage() {
                         <div className="flex justify-end gap-2">
                           <button
                             onClick={() => openEditModal(rule)}
-                            className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-primary hover:bg-primary/10 rounded-md transition-colors"
+                            className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-primary hover:bg-primary/10 rounded-md transition-colors cursor-pointer"
                           >
                             <span className="material-icons-round text-xl">edit</span>
                           </button>
                           <button
                             onClick={() => handleDeleteClick(rule.id)}
-                            className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-md transition-colors"
+                            className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-md transition-colors cursor-pointer"
                           >
                             <span className="material-icons-round text-xl">delete_outline</span>
                           </button>

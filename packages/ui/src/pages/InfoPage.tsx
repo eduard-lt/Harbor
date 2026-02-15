@@ -28,7 +28,7 @@ export function InfoPage() {
         <>
             <Header title="Info & Guide" subtitle="Learn how to get the most out of Harbor." />
 
-            <div className="p-8 max-w-4xl mx-auto w-full overflow-y-auto custom-scrollbar">
+            <div className="p-12 max-w-4xl mx-auto w-full overflow-y-auto custom-scrollbar">
                 {/* Tabs */}
                 <div className="flex space-x-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl mb-8 w-fit">
                     <button
@@ -117,7 +117,7 @@ export function InfoPage() {
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 text-center py-12">
                         <img src="/harbor.svg" alt="Logo" className="w-24 h-24 mx-auto mb-6" />
                         <h2 className="text-3xl font-bold text-slate-800 dark:text-white mb-2">Harbor</h2>
-                        <p className="text-slate-500 mb-8">Version 1.1.0</p>
+                        <p className="text-slate-500 mb-8">Version 1.1.4</p>
 
                         <p className="max-w-lg mx-auto text-slate-600 dark:text-slate-400 mb-8">
                             Harbor is a free, open-source utility designed to keep your digital life organized.

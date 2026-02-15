@@ -8,7 +8,7 @@ interface HeaderProps {
 
 export function Header({ title, subtitle, children }: HeaderProps) {
   return (
-    <header className="min-h-[5rem] h-20 flex items-center justify-between px-8 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-10 flex-shrink-0">
+    <header className="min-h-[6rem] py-6 pt-10 flex items-center justify-between px-8 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-10 flex-shrink-0">
       <div className="flex-shrink-0">
         <h1 className="text-2xl font-bold">{title}</h1>
         {subtitle && (

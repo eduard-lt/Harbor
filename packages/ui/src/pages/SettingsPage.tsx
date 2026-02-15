@@ -42,7 +42,7 @@ export function SettingsPage() {
       <Header title="Settings" subtitle="Configure how Harbor manages your automated workflows and environment." />
 
       <div className="flex-1 overflow-y-auto custom-scrollbar">
-        <div className="max-w-4xl mx-auto py-12 px-8">
+        <div className="max-w-4xl mx-auto p-12">
           {error && (
             <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-lg">
               {error}
@@ -112,7 +112,7 @@ export function SettingsPage() {
                       <div className="h-2 w-1/2 bg-slate-100 rounded-full"></div>
                     </div>
                     {theme === 'light' && (
-                      <div className="absolute top-2 right-2 bg-primary text-white rounded-full p-0.5">
+                      <div className="absolute top-2 right-2 bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center shadow-sm">
                         <span className="material-icons-round text-[14px]">done</span>
                       </div>
                     )}
@@ -144,7 +144,7 @@ export function SettingsPage() {
                       <div className="h-2 w-1/2 bg-slate-800 rounded-full"></div>
                     </div>
                     {theme === 'dark' && (
-                      <div className="absolute top-2 right-2 bg-primary text-white rounded-full p-0.5">
+                      <div className="absolute top-2 right-2 bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center shadow-sm">
                         <span className="material-icons-round text-[14px]">done</span>
                       </div>
                     )}
@@ -173,7 +173,7 @@ export function SettingsPage() {
                     <div className="w-1/2 bg-white h-full border-r border-slate-200"></div>
                     <div className="w-1/2 bg-slate-900 h-full"></div>
                     {theme === 'system' && (
-                      <div className="absolute top-2 right-2 bg-primary text-white rounded-full p-0.5">
+                      <div className="absolute top-2 right-2 bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center shadow-sm">
                         <span className="material-icons-round text-[14px]">done</span>
                       </div>
                     )}

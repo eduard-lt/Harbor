@@ -51,7 +51,7 @@ export function Sidebar() {
   return (
     <aside className="w-20 lg:w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col transition-all duration-300 relative z-20">
       {/* Logo */}
-      <div className="p-6 flex items-center gap-3">
+      <div className="p-6 pt-10 flex items-center gap-3">
         <img src="/harbor.svg" alt="Harbor" className="w-10 h-10 object-contain" />
         <span className="text-xl font-bold tracking-tight hidden lg:block dark:text-white">Harbor</span>
       </div>
@@ -137,7 +137,7 @@ export function Sidebar() {
         <div className="space-y-2">
           <button
             onClick={() => open('https://github.com/Eduard2609/Harbor')}
-            className="w-full flex items-center gap-4 px-4 py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group"
+            className="w-full flex items-center gap-4 px-4 py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group cursor-pointer"
             title="GitHub Repository"
           >
             <span className="material-icons-round text-xl group-hover:text-primary transition-colors">code</span>
@@ -145,7 +145,7 @@ export function Sidebar() {
           </button>
           <button
             onClick={() => open('https://ko-fi.com/eduardolteanu')}
-            className="w-full flex items-center gap-4 px-4 py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group"
+            className="w-full flex items-center gap-4 px-4 py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group cursor-pointer"
             title="Buy me a coffee"
           >
             <span className="material-icons-round text-xl text-slate-400 group-hover:text-[#FF5E5B] transition-colors">favorite</span>

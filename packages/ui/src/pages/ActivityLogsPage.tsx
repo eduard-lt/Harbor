@@ -8,7 +8,7 @@ export function ActivityLogsPage() {
   return (
     <>
       <Header title="Activity Logs" subtitle={`${total} moves recorded`} />
-      <div className="flex-1 p-8 overflow-auto">
+      <div className="flex-1 p-12 overflow-auto">
         {error && (
           <div className="p-4 mb-4 bg-red-50 text-red-600 rounded-lg">
             {error}

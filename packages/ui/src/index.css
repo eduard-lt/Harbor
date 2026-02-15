@@ -23,6 +23,10 @@
     font-family: var(--font-family-display);
   }
 
+  button {
+    cursor: pointer;
+  }
+
   /* Custom scrollbar */
   /* Global scrollbar */
   ::-webkit-scrollbar {
