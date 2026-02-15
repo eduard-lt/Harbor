@@ -19,6 +19,10 @@ cmd = "npm run tauri:build --prefix packages/ui -- --debug"
 help = "Remove build artifacts"
 cmd = "cargo clean"
 
+[tool.poe.tasks.clean-startup]
+help = "Remove ghost startup entries (e.g. from debug builds)"
+cmd = "powershell -ExecutionPolicy Bypass -File tools/cleanup.ps1"
+
 # ============================================================================
 # DEVELOPMENT TASKS
 # ============================================================================
