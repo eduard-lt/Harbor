@@ -69,9 +69,10 @@ Contributions are what make the open-source community such an amazing place to l
 
 Harbor is a **Tauri v2** application (React + Rust).
 
-1. **Install:** Node.js 20+, Rust (Stable), and WiX Toolset v3.
+1. **Install:** Node.js 20+, Rust (Stable), WiX Toolset v3, Python 3.10+ and [Poe the Poet](https://poethepoet.natn.io/installation.html)
 2. **UI Setup:** `cd packages/ui && npm install`
-3. **Build:** `npm run tauri:build`
+3. **Dev:** `poe dev`
+4. **Build:** `poe build`
 
 ---
 
