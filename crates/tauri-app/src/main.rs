@@ -41,10 +41,14 @@ fn main() {
         default_config()
     };
 
+    // Start service if enabled in config (Default: true for new users)
+    let service_enabled = config.service_enabled.unwrap_or(true);
+
     let app_state = AppState::new(cfg_path, config);
 
-    // Start service by default - CHANGED for v1.1.1: Default is OFF
-    // let _ = commands::settings::internal_start_service(&app_state);
+    if service_enabled {
+        let _ = commands::settings::internal_start_service(&app_state);
+    }
 
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
@@ -86,6 +90,8 @@ fn main() {
             commands::open_downloads_folder,
             commands::get_config_path,
             commands::reset_to_defaults,
+            commands::get_tutorial_completed,
+            commands::set_tutorial_completed,
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
@@ -93,7 +99,7 @@ fn main() {
                 api.prevent_close();
             }
         })
-        .setup(|app| {
+        .setup(move |app| {
             use tauri::image::Image;
             use tauri::menu::{CheckMenuItemBuilder, MenuBuilder, MenuItemBuilder};
             use tauri::tray::{MouseButton, TrayIconBuilder, TrayIconEvent};
@@ -125,12 +131,12 @@ fn main() {
             // Build Tray Menu
             let status_on = CheckMenuItemBuilder::new("Service On")
                 .id("service_on")
-                .checked(true) // Default is on
+                .checked(service_enabled) // Default is based on config
                 .build(app)?;
 
             let status_off = CheckMenuItemBuilder::new("Service Off")
                 .id("service_off")
-                .checked(false)
+                .checked(!service_enabled)
                 .build(app)?;
 
             let organize_now = MenuItemBuilder::new("Organize Now")
@@ -191,6 +197,7 @@ fn main() {
                     }
                     "service_on" => {
                         let state: tauri::State<AppState> = app.state();
+                        let _ = commands::settings::persist_service_state(&state, true);
                         let _ = commands::settings::internal_start_service(&state);
                         let _ = status_on.set_checked(true);
                         let _ = status_off.set_checked(false);
@@ -198,6 +205,7 @@ fn main() {
                     }
                     "service_off" => {
                         let state: tauri::State<AppState> = app.state();
+                        let _ = commands::settings::persist_service_state(&state, false);
                         let _ = commands::settings::internal_stop_service(&state);
                         let _ = status_on.set_checked(false);
                         let _ = status_off.set_checked(true);

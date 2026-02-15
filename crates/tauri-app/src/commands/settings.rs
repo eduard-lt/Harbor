@@ -126,13 +126,29 @@ pub fn internal_stop_service(state: &AppState) -> Result<(), String> {
     Ok(())
 }
 
+pub fn persist_service_state(state: &AppState, enabled: bool) -> Result<(), String> {
+    {
+        let mut config = state.config.write().map_err(|e| e.to_string())?;
+        config.service_enabled = Some(enabled);
+    }
+    // Save to disk
+    let config = state.config.read().map_err(|e| e.to_string())?;
+    if let Ok(yaml) = serde_yaml::to_string(&*config) {
+        std::fs::write(&state.config_path, yaml)
+            .map_err(|e| format!("Failed to write config: {}", e))?;
+    }
+    Ok(())
+}
+
 #[tauri::command]
 pub async fn start_service(state: State<'_, AppState>) -> Result<(), String> {
+    persist_service_state(&state, true)?;
     internal_start_service(&state)
 }
 
 #[tauri::command]
 pub async fn stop_service(state: State<'_, AppState>) -> Result<(), String> {
+    persist_service_state(&state, false)?;
     internal_stop_service(&state)
 }
 
@@ -297,6 +313,37 @@ pub async fn reset_to_defaults(state: State<'_, AppState>) -> Result<(), String>
     // Stop and start service to apply changes
     let _ = internal_stop_service(&state);
     let _ = internal_start_service(&state);
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn get_tutorial_completed(state: State<'_, AppState>) -> Result<bool, String> {
+    let config = state.config.read().map_err(|e| e.to_string())?;
+    // If None, we treat it as completed (true) for existing users who upgrade,
+    // but default_config sets it to Some(false) for new users.
+    // However, if we just upgraded and it's missing from yaml, it will be None.
+    Ok(config.tutorial_completed.unwrap_or(true))
+}
+
+#[tauri::command]
+pub async fn set_tutorial_completed(
+    state: State<'_, AppState>,
+    completed: bool,
+) -> Result<(), String> {
+    {
+        let mut config = state.config.write().map_err(|e| e.to_string())?;
+        config.tutorial_completed = Some(completed);
+    }
+
+    // Save to disk
+    let config = state.config.read().map_err(|e| e.to_string())?;
+    if let Ok(yaml) = serde_yaml::to_string(&*config) {
+        std::fs::write(&state.config_path, yaml)
+            .map_err(|e| format!("Failed to write config: {}", e))?;
+    } else {
+        return Err("Failed to serialize config".to_string());
+    }
 
     Ok(())
 }

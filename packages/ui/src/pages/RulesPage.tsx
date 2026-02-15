@@ -20,6 +20,8 @@ const iconColorClassesLight: Record<string, string> = {
   orange: 'bg-orange-100 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400',
 };
 
+import { getTutorialCompleted, setTutorialCompleted } from '../lib/tauri';
+
 export function RulesPage() {
   const { rules, loading, error, addRule, editRule, removeRule, toggleRule } = useRules();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -29,12 +31,19 @@ export function RulesPage() {
   const [showTutorial, setShowTutorial] = useState(false);
 
   useEffect(() => {
-    const hasSeenTutorial = localStorage.getItem('hasSeenTutorial');
-    if (!hasSeenTutorial) {
-      // Small delay to ensure smooth entry animation
-      const timer = setTimeout(() => setShowTutorial(true), 500);
-      return () => clearTimeout(timer);
-    }
+    const checkTutorial = async () => {
+      try {
+        const completed = await getTutorialCompleted();
+        if (!completed) {
+          // Small delay to ensure smooth entry animation
+          const timer = setTimeout(() => setShowTutorial(true), 500);
+          return () => clearTimeout(timer);
+        }
+      } catch (e) {
+        console.error("Failed to check tutorial status:", e);
+      }
+    };
+    checkTutorial();
   }, []);
 
   const handleCreate = async (ruleData: Omit<Rule, 'id' | 'icon' | 'icon_color'>) => {
@@ -67,9 +76,13 @@ export function RulesPage() {
     }
   };
 
-  const handleCloseTutorial = () => {
+  const handleCloseTutorial = async () => {
     setShowTutorial(false);
-    localStorage.setItem('hasSeenTutorial', 'true');
+    try {
+      await setTutorialCompleted(true);
+    } catch (e) {
+      console.error("Failed to set tutorial status:", e);
+    }
   };
 
   const filteredRules = rules.filter(r =>

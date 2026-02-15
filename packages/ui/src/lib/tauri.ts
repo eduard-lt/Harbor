@@ -135,3 +135,11 @@ export const openDownloadsFolder = async (): Promise<void> => {
 export const getConfigPath = async (): Promise<string> => {
     return await invoke('get_config_path');
 };
+
+export const getTutorialCompleted = async (): Promise<boolean> => {
+    return await invoke('get_tutorial_completed');
+};
+
+export const setTutorialCompleted = async (completed: boolean): Promise<void> => {
+    return await invoke('set_tutorial_completed', { completed });
+};

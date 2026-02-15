@@ -192,6 +192,8 @@ fn main() -> Result<()> {
         DownloadsConfig {
             download_dir: dl,
             min_age_secs: Some(5),
+            tutorial_completed: None,
+            service_enabled: None,
             rules: vec![
                 Rule {
                     name: "Images".to_string(),

@@ -15,6 +15,8 @@ pub struct DownloadsConfig {
     pub download_dir: String,
     pub rules: Vec<Rule>,
     pub min_age_secs: Option<u64>,
+    pub tutorial_completed: Option<bool>,
+    pub service_enabled: Option<bool>,
 }
 
 pub type OrganizeResult = (PathBuf, PathBuf, String, Option<String>);
@@ -56,6 +58,8 @@ pub fn default_config() -> DownloadsConfig {
     DownloadsConfig {
         download_dir: dl,
         min_age_secs: Some(5),
+        tutorial_completed: Some(false),
+        service_enabled: Some(true),
         rules: vec![
             Rule {
                 name: "Images".to_string(),
@@ -611,6 +615,8 @@ mod tests {
         let cfg = DownloadsConfig {
             download_dir: dl.to_str().unwrap().into(),
             min_age_secs: Some(0), // Immediate move
+            tutorial_completed: None,
+            service_enabled: None,
             rules: vec![Rule {
                 name: "Images".into(),
                 extensions: Some(vec!["png".into()]),
@@ -664,6 +670,8 @@ mod tests {
                 enabled: None,
             }],
             min_age_secs: None,
+            tutorial_completed: None,
+            service_enabled: None,
         };
 
         // Clean up
