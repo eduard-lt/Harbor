@@ -129,6 +129,10 @@ fn restart_service_if_running(state: &AppState) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn get_rules(state: State<'_, AppState>) -> Result<Vec<RuleDto>, String> {
+    impl_get_rules(&state).await
+}
+
+pub async fn impl_get_rules(state: &AppState) -> Result<Vec<RuleDto>, String> {
     let config = state.config.read().map_err(|e| e.to_string())?;
     Ok(config.rules.iter().map(RuleDto::from).collect())
 }
@@ -137,6 +141,32 @@ pub async fn get_rules(state: State<'_, AppState>) -> Result<Vec<RuleDto>, Strin
 #[allow(clippy::too_many_arguments)]
 pub async fn create_rule(
     state: State<'_, AppState>,
+    name: String,
+    extensions: Vec<String>,
+    destination: String,
+    pattern: Option<String>,
+    min_size_bytes: Option<u64>,
+    max_size_bytes: Option<u64>,
+    create_symlink: Option<bool>,
+    enabled: Option<bool>,
+) -> Result<RuleDto, String> {
+    impl_create_rule(
+        &state,
+        name,
+        extensions,
+        destination,
+        pattern,
+        min_size_bytes,
+        max_size_bytes,
+        create_symlink,
+        enabled,
+    )
+    .await
+}
+
+#[allow(clippy::too_many_arguments)]
+pub async fn impl_create_rule(
+    state: &AppState,
     name: String,
     extensions: Vec<String>,
     destination: String,
@@ -177,11 +207,11 @@ pub async fn create_rule(
         };
 
         config.rules.push(rule.clone());
-        save_config(&state, &config)?;
+        save_config(state, &config)?;
         rule
     };
 
-    restart_service_if_running(&state)?;
+    restart_service_if_running(state)?;
 
     Ok(RuleDto::from(&new_rule))
 }
@@ -190,6 +220,34 @@ pub async fn create_rule(
 #[allow(clippy::too_many_arguments)]
 pub async fn update_rule(
     state: State<'_, AppState>,
+    id: String,
+    name: Option<String>,
+    extensions: Option<Vec<String>>,
+    destination: Option<String>,
+    pattern: Option<String>,
+    min_size_bytes: Option<u64>,
+    max_size_bytes: Option<u64>,
+    create_symlink: Option<bool>,
+    enabled: Option<bool>,
+) -> Result<RuleDto, String> {
+    impl_update_rule(
+        &state,
+        id,
+        name,
+        extensions,
+        destination,
+        pattern,
+        min_size_bytes,
+        max_size_bytes,
+        create_symlink,
+        enabled,
+    )
+    .await
+}
+
+#[allow(clippy::too_many_arguments)]
+pub async fn impl_update_rule(
+    state: &AppState,
     id: String,
     name: Option<String>,
     extensions: Option<Vec<String>>,
@@ -240,17 +298,21 @@ pub async fn update_rule(
         }
 
         let updated = RuleDto::from(&*rule);
-        save_config(&state, &config)?;
+        save_config(state, &config)?;
         updated
     };
 
-    restart_service_if_running(&state)?;
+    restart_service_if_running(state)?;
 
     Ok(updated)
 }
 
 #[tauri::command]
 pub async fn delete_rule(state: State<'_, AppState>, rule_name: String) -> Result<(), String> {
+    impl_delete_rule(&state, rule_name).await
+}
+
+pub async fn impl_delete_rule(state: &AppState, rule_name: String) -> Result<(), String> {
     {
         let mut config = state.config.write().map_err(|e| e.to_string())?;
 
@@ -261,15 +323,23 @@ pub async fn delete_rule(state: State<'_, AppState>, rule_name: String) -> Resul
             return Err(format!("Rule '{}' not found", rule_name));
         }
 
-        save_config(&state, &config)?;
+        save_config(state, &config)?;
     }
-    restart_service_if_running(&state)?;
+    restart_service_if_running(state)?;
     Ok(())
 }
 
 #[tauri::command]
 pub async fn toggle_rule(
     state: State<'_, AppState>,
+    rule_name: String,
+    enabled: bool,
+) -> Result<(), String> {
+    impl_toggle_rule(&state, rule_name, enabled).await
+}
+
+pub async fn impl_toggle_rule(
+    state: &AppState,
     rule_name: String,
     enabled: bool,
 ) -> Result<(), String> {
@@ -283,9 +353,9 @@ pub async fn toggle_rule(
             .ok_or_else(|| format!("Rule '{}' not found", rule_name))?;
 
         rule.enabled = Some(enabled);
-        save_config(&state, &config)?;
+        save_config(state, &config)?;
     }
-    restart_service_if_running(&state)?;
+    restart_service_if_running(state)?;
 
     Ok(())
 }
@@ -295,6 +365,10 @@ pub async fn reorder_rules(
     state: State<'_, AppState>,
     rule_names: Vec<String>,
 ) -> Result<(), String> {
+    impl_reorder_rules(&state, rule_names).await
+}
+
+pub async fn impl_reorder_rules(state: &AppState, rule_names: Vec<String>) -> Result<(), String> {
     {
         let mut config = state.config.write().map_err(|e| e.to_string())?;
 
@@ -315,9 +389,9 @@ pub async fn reorder_rules(
         }
 
         config.rules = new_rules;
-        save_config(&state, &config)?;
+        save_config(state, &config)?;
     }
-    restart_service_if_running(&state)?;
+    restart_service_if_running(state)?;
 
     Ok(())
 }
@@ -364,5 +438,222 @@ mod tests {
             "slate"
         );
         assert_eq!(derive_icon_color(None), "slate");
+    }
+
+    use tempfile::tempdir;
+
+    fn create_test_state() -> (AppState, tempfile::TempDir) {
+        let tmp = tempdir().unwrap();
+        let cfg_path = tmp.path().join("config.yaml");
+        let config = DownloadsConfig {
+            download_dir: "DL".to_string(),
+            rules: vec![],
+            min_age_secs: None,
+            tutorial_completed: None,
+            service_enabled: Some(false),
+        };
+        let yaml = serde_yaml::to_string(&config).unwrap();
+        std::fs::write(&cfg_path, yaml).unwrap();
+
+        (AppState::new(cfg_path, config), tmp)
+    }
+
+    #[tokio::test]
+    async fn test_create_rule() {
+        let (state, _tmp) = create_test_state();
+        let state = State::from(&state); // Wrap in tauri::State
+
+        let rule = create_rule(
+            state.clone(),
+            "New Rule".to_string(),
+            vec!["txt".to_string()],
+            "Target".to_string(),
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .await;
+
+        assert!(rule.is_ok());
+        let rule = rule.unwrap();
+        assert_eq!(rule.name, "New Rule");
+
+        // Verify it's in config
+        let rules = get_rules(state.clone()).await.unwrap();
+        assert_eq!(rules.len(), 1);
+        assert_eq!(rules[0].name, "New Rule");
+
+        // Duplicate name should fail
+        let res = create_rule(
+            state.clone(),
+            "New Rule".to_string(),
+            vec!["txt".to_string()],
+            "Target".to_string(),
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .await;
+        assert!(res.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_update_rule() {
+        let (state, _tmp) = create_test_state();
+        let state = State::from(&state);
+
+        let _ = create_rule(
+            state.clone(),
+            "Rule1".to_string(),
+            vec!["txt".to_string()],
+            "Target".to_string(),
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .await
+        .unwrap();
+
+        let updated = update_rule(
+            state.clone(),
+            "Rule1".to_string(),
+            Some("Rule1_Updated".to_string()),
+            Some(vec!["md".to_string()]),
+            Some("NewTarget".to_string()),
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .await;
+
+        assert!(updated.is_ok());
+        let u = updated.unwrap();
+        assert_eq!(u.name, "Rule1_Updated");
+        assert_eq!(u.destination, "NewTarget");
+        assert!(u.extensions.contains(&".md".to_string()));
+
+        // Verify config
+        let rules = get_rules(state.clone()).await.unwrap();
+        assert_eq!(rules.len(), 1);
+        assert_eq!(rules[0].name, "Rule1_Updated");
+    }
+
+    #[tokio::test]
+    async fn test_delete_rule() {
+        let (state, _tmp) = create_test_state();
+        let state = State::from(&state);
+
+        create_rule(
+            state.clone(),
+            "To Delete".to_string(),
+            vec![],
+            "".to_string(),
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .await
+        .unwrap();
+
+        let res = delete_rule(state.clone(), "To Delete".to_string()).await;
+        assert!(res.is_ok());
+
+        let rules = get_rules(state.clone()).await.unwrap();
+        assert!(rules.is_empty());
+
+        // Delete non-existent
+        let res = delete_rule(state.clone(), "NonExistent".to_string()).await;
+        assert!(res.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_toggle_rule() {
+        let (state, _tmp) = create_test_state();
+        let state = State::from(&state);
+
+        create_rule(
+            state.clone(),
+            "ToggleMe".to_string(),
+            vec![],
+            "".to_string(),
+            None,
+            None,
+            None,
+            None,
+            Some(true),
+        )
+        .await
+        .unwrap();
+
+        toggle_rule(state.clone(), "ToggleMe".to_string(), false)
+            .await
+            .unwrap();
+
+        let rules = get_rules(state.clone()).await.unwrap();
+        assert!(!rules[0].enabled);
+    }
+
+    #[tokio::test]
+    async fn test_reorder_rules() {
+        let (state, _tmp) = create_test_state();
+        let state = State::from(&state);
+
+        create_rule(
+            state.clone(),
+            "A".into(),
+            vec![],
+            "".into(),
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .await
+        .unwrap();
+        create_rule(
+            state.clone(),
+            "B".into(),
+            vec![],
+            "".into(),
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .await
+        .unwrap();
+        create_rule(
+            state.clone(),
+            "C".into(),
+            vec![],
+            "".into(),
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .await
+        .unwrap();
+
+        let order = vec!["C".to_string(), "A".to_string(), "B".to_string()];
+        reorder_rules(state.clone(), order).await.unwrap();
+
+        let rules = get_rules(state.clone()).await.unwrap();
+        assert_eq!(rules[0].name, "C");
+        assert_eq!(rules[1].name, "A");
+        assert_eq!(rules[2].name, "B");
     }
 }

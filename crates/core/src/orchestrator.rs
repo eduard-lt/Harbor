@@ -284,4 +284,59 @@ mod tests {
         sys.refresh_processes(ProcessesToUpdate::Some(&[Pid::from_u32(pid as u32)]), true);
         assert!(sys.process(Pid::from_u32(pid as u32)).is_none());
     }
+    #[test]
+    fn test_spawn_service_invalid_cwd() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let logs = temp.path().join("logs");
+        std::fs::create_dir(&logs).unwrap();
+
+        let s = Service {
+            name: "invalid_cwd".to_string(),
+            command: "echo hello".to_string(),
+            cwd: Some("nonexistent_dir".to_string()),
+            env: None,
+            depends_on: None,
+            health_check: None,
+        };
+
+        let res = spawn_service(temp.path(), &logs, &s);
+        assert!(res.is_err());
+    }
+
+    #[test]
+    fn test_down_no_state() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let state_path = temp.path().join("no_state.json");
+        let res = down(&state_path);
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn test_down_dead_process() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let state_path = temp.path().join("state_dead.json");
+
+        // Mock a service that just ran (we can't easily mock a dead PID that matches our structure without writing state)
+        // So we run a real quick process
+        let s1 = Service {
+            name: "quick".to_string(),
+            command: "echo quick".to_string(),
+            cwd: None,
+            env: None,
+            depends_on: None,
+            health_check: None,
+        };
+        let cfg = WorkspaceConfig { services: vec![s1] };
+
+        // Up
+        let _ = up(&cfg, temp.path(), &state_path).unwrap();
+
+        // Wait for it to finish
+        std::thread::sleep(std::time::Duration::from_millis(200));
+
+        // Now down
+        let res = down(&state_path);
+        assert!(res.is_ok());
+        assert!(!state_path.exists());
+    }
 }

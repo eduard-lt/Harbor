@@ -113,6 +113,21 @@ fn derive_icon_and_color(ext: &str) -> (String, String) {
     }
 }
 
+fn read_log_entries(reader: impl BufRead) -> Vec<ActivityLogDto> {
+    reader
+        .lines()
+        .map_while(Result::ok)
+        .filter(|line| {
+            !line.trim().is_empty()
+                && !line.starts_with("Recent Moves")
+                && !line.starts_with("---")
+                && !line.starts_with("Startup:")
+        })
+        .enumerate()
+        .filter_map(|(idx, line)| parse_log_line(&line, idx))
+        .collect()
+}
+
 #[tauri::command]
 pub async fn get_activity_logs(
     state: State<'_, AppState>,
@@ -135,18 +150,7 @@ pub async fn get_activity_logs(
     let reader = BufReader::new(file);
 
     // Read all lines and parse them
-    let mut all_logs: Vec<ActivityLogDto> = reader
-        .lines()
-        .map_while(Result::ok)
-        .filter(|line| {
-            !line.trim().is_empty()
-                && !line.starts_with("Recent Moves")
-                && !line.starts_with("---")
-                && !line.starts_with("Startup:")
-        })
-        .enumerate()
-        .filter_map(|(idx, line)| parse_log_line(&line, idx))
-        .collect();
+    let mut all_logs = read_log_entries(reader);
 
     // Reverse to show most recent first
     all_logs.reverse();
@@ -180,23 +184,13 @@ pub async fn get_activity_stats(state: State<'_, AppState>) -> Result<ActivitySt
     let file = fs::File::open(&log_path).map_err(|e| format!("Failed to open log file: {}", e))?;
     let reader = BufReader::new(file);
 
+    let logs = read_log_entries(reader);
+    let total = logs.len();
     let mut rule_counts: std::collections::HashMap<String, usize> =
         std::collections::HashMap::new();
-    let mut total = 0;
 
-    for line in reader.lines().map_while(Result::ok) {
-        if line.trim().is_empty()
-            || line.starts_with("Recent Moves")
-            || line.starts_with("---")
-            || line.starts_with("Startup:")
-        {
-            continue;
-        }
-
-        if let Some(log) = parse_log_line(&line, 0) {
-            total += 1;
-            *rule_counts.entry(log.rule_name).or_insert(0) += 1;
-        }
+    for log in logs {
+        *rule_counts.entry(log.rule_name).or_insert(0) += 1;
     }
 
     let most_active_rule = rule_counts
@@ -222,4 +216,58 @@ pub async fn clear_activity_logs(state: State<'_, AppState>) -> Result<(), Strin
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_derive_icon_and_color() {
+        assert_eq!(
+            derive_icon_and_color("jpg"),
+            ("image".to_string(), "blue".to_string())
+        );
+        assert_eq!(
+            derive_icon_and_color("mp4"),
+            ("movie".to_string(), "indigo".to_string())
+        );
+        assert_eq!(
+            derive_icon_and_color("txt"),
+            ("description".to_string(), "blue".to_string())
+        );
+        assert_eq!(
+            derive_icon_and_color("unknown"),
+            ("insert_drive_file".to_string(), "slate".to_string())
+        );
+    }
+
+    #[test]
+    fn test_parse_log_line() {
+        let line = r#"C:\Source\file.txt -> C:\Dest\file.txt (Docs) Symlink created"#;
+        let dto = parse_log_line(line, 1).unwrap();
+        assert_eq!(dto.id, "1");
+        assert_eq!(dto.source_path, r"C:\Source\file.txt");
+        assert_eq!(dto.dest_path, r"C:\Dest\file.txt");
+        assert_eq!(dto.rule_name, "Docs");
+        assert_eq!(dto.symlink_info.as_deref(), Some("Symlink created"));
+        assert_eq!(dto.filename, "file.txt");
+        assert_eq!(dto.icon, "description");
+        assert_eq!(dto.icon_color, "blue");
+
+        // Test without symlink info
+        let line2 = r#"C:\src\img.png -> C:\dst\img.png (Images) "#;
+        let dto2 = parse_log_line(line2, 2).unwrap();
+        assert_eq!(dto2.symlink_info, None);
+    }
+
+    #[test]
+    fn test_read_log_entries() {
+        let data = "Recent Moves Log\n----------------\n\nC:\\src\\a.txt -> C:\\dst\\a.txt (RuleA)\nC:\\src\\b.txt -> C:\\dst\\b.txt (RuleB)";
+        let reader = std::io::Cursor::new(data);
+        let logs = read_log_entries(reader);
+        assert_eq!(logs.len(), 2);
+        assert_eq!(logs[0].rule_name, "RuleA");
+        assert_eq!(logs[1].rule_name, "RuleB");
+    }
 }

@@ -347,3 +347,81 @@ pub async fn set_tutorial_completed(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use harbor_core::downloads::DownloadsConfig;
+    use tempfile::tempdir;
+
+    #[test]
+    fn test_append_to_log_creates_and_writes() {
+        let tmp = tempdir().unwrap();
+        let log_path = tmp.path().join("logs").join("recent.log");
+
+        let actions = vec![
+            (
+                PathBuf::from("src/a.txt"),
+                PathBuf::from("dst/a.txt"),
+                "Images".to_string(),
+                None,
+            ),
+            (
+                PathBuf::from("src/b.txt"),
+                PathBuf::from("dst/b.txt"),
+                "Docs".to_string(),
+                Some("Symlinked".to_string()),
+            ),
+        ];
+
+        append_to_log(&log_path, &actions);
+
+        assert!(log_path.exists());
+        let content = std::fs::read_to_string(&log_path).unwrap();
+        assert!(content.contains("src/a.txt -> dst/a.txt (Images)"));
+        assert!(content.contains("src/b.txt -> dst/b.txt (Docs) Symlinked"));
+    }
+
+    #[test]
+    fn test_append_to_log_empty() {
+        let tmp = tempdir().unwrap();
+        let log_path = tmp.path().join("empty.log");
+        let actions = vec![];
+
+        append_to_log(&log_path, &actions);
+
+        assert!(!log_path.exists());
+    }
+
+    #[test]
+    fn test_persist_service_state() {
+        let tmp = tempdir().unwrap();
+        let cfg_path = tmp.path().join("config.yaml");
+
+        let initial_cfg = DownloadsConfig {
+            download_dir: "DL".to_string(),
+            rules: vec![],
+            min_age_secs: None,
+            tutorial_completed: None,
+            service_enabled: Some(false),
+        };
+        let yaml = serde_yaml::to_string(&initial_cfg).unwrap();
+        std::fs::write(&cfg_path, yaml).unwrap();
+
+        let state = AppState::new(cfg_path.clone(), initial_cfg);
+
+        // Enable
+        let res = persist_service_state(&state, true);
+        assert!(res.is_ok());
+
+        let content = std::fs::read_to_string(&cfg_path).unwrap();
+        assert!(content.contains("service_enabled: true"));
+
+        // Disable
+        let res = persist_service_state(&state, false);
+        assert!(res.is_ok());
+
+        let content = std::fs::read_to_string(&cfg_path).unwrap();
+        assert!(content.contains("service_enabled: false"));
+    }
+}

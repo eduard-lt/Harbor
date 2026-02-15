@@ -137,4 +137,32 @@ mod tests {
         };
         assert!(wait_ready(&hc).is_ok());
     }
+    #[test]
+    fn test_wait_ready_timeout() {
+        // Use a command that always fails
+        let cmd = if cfg!(windows) { "exit 1" } else { "false" };
+        let hc = HealthCheck {
+            kind: HealthCheckKind::Command,
+            command: Some(cmd.to_string()),
+            url: None,
+            tcp_port: None,
+            timeout_ms: Some(10), // Short timeout
+            retries: Some(10),    // Many retries, should hit timeout first
+        };
+        let res = wait_ready(&hc);
+        assert!(res.is_err());
+    }
+
+    #[test]
+    fn test_health_check_none() {
+        let hc = HealthCheck {
+            kind: HealthCheckKind::None,
+            command: None,
+            url: None,
+            tcp_port: None,
+            timeout_ms: None,
+            retries: None,
+        };
+        assert!(wait_ready(&hc).is_ok());
+    }
 }

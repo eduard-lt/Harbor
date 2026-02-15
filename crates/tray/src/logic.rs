@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use harbor_core::downloads::{
     cleanup_old_symlinks, load_downloads_config, organize_once, watch_polling, DownloadsConfig,
     OrganizeResult,
