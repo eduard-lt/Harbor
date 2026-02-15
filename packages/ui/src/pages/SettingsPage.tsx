@@ -286,7 +286,7 @@ export function SettingsPage() {
           </div>
 
         </div>
-        <p className="text-center text-slate-400 text-xs mt-12 mb-4">&copy; 2024 Harbor Utility. All rights reserved.</p>
+        <p className="text-center text-slate-400 text-xs mt-12 mb-4">&copy; {new Date().getFullYear()} Harbor Utility.</p>
       </div>
 
       {feedbackMessage && (
