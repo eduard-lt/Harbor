@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { open } from '@tauri-apps/plugin-shell';
 import { useSettings } from '../hooks/useSettings';
+import { useUpdateCheck } from '../hooks/useUpdateCheck';
 import { useState, useEffect } from 'react';
 
 interface NavItem {
@@ -18,6 +19,7 @@ const navItems: NavItem[] = [
 
 export function Sidebar() {
   const { serviceStatus, toggleService, loading } = useSettings();
+  const { available, url, dismissNotification } = useUpdateCheck();
   const serviceEnabled = serviceStatus.running;
   const [showCoachMark, setShowCoachMark] = useState(false);
 
@@ -136,12 +138,29 @@ export function Sidebar() {
         {/* External Links */}
         <div className="space-y-2">
           <button
-            onClick={() => open('https://github.com/eduard-lt/Harbor')}
-            className="w-full flex items-center gap-4 px-4 py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group cursor-pointer"
-            title="GitHub Repository"
+            onClick={() => {
+              if (available && url) {
+                open(url);
+                dismissNotification();
+              } else {
+                open('https://github.com/eduard-lt/Harbor');
+              }
+            }}
+            className="w-full flex items-center gap-4 px-4 py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group cursor-pointer relative"
+            title={available ? "Update Available!" : "GitHub Repository"}
           >
-            <span className="material-icons-round text-xl group-hover:text-primary transition-colors">code</span>
-            <span className="text-sm font-medium hidden lg:block group-hover:text-primary transition-colors">GitHub</span>
+            <div className="relative">
+              <span className={`material-icons-round text-xl transition-colors ${available ? 'text-slate-800 dark:text-white group-hover:text-primary' : 'group-hover:text-primary'}`}>code</span>
+              {available && (
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border-2 border-white dark:border-slate-900"></span>
+                </span>
+              )}
+            </div>
+            <span className={`text-sm font-medium hidden lg:block transition-colors ${available ? 'text-slate-800 dark:text-white group-hover:text-primary' : 'group-hover:text-primary'}`}>
+              {available ? 'Update Available' : 'GitHub'}
+            </span>
           </button>
           <button
             onClick={() => open('https://ko-fi.com/eduardolteanu')}

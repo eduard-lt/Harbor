@@ -1,6 +1,7 @@
 import { useTheme } from '../context/ThemeContext';
 import { Header } from '../components/Header';
 import { useSettings } from '../hooks/useSettings';
+import { useUpdateCheck } from '../hooks/useUpdateCheck';
 import { useState } from 'react';
 import { ConfirmationModal } from '../components/ConfirmationModal';
 import { useWindowSize } from '../hooks/useWindowSize';
@@ -18,6 +19,8 @@ export function SettingsPage() {
     reload,
     reset,
   } = useSettings();
+
+  const { checkUpdates, toggleCheckUpdates } = useUpdateCheck();
 
   const [showResetModal, setShowResetModal] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
@@ -227,6 +230,46 @@ export function SettingsPage() {
                 </div>
               </div>
             </section>
+
+            {/* Updates & Maintenance */}
+            <section>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center">
+                <span className="material-icons-round mr-2 text-primary">update</span>
+                Updates & Maintenance
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800 dark:text-white">Check for Updates</p>
+                    <p className="text-xs text-slate-500">Notify me when a new version is available.</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={checkUpdates}
+                      onChange={toggleCheckUpdates}
+                    />
+                    <div className="w-9 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                  </label>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
+                  {/* Notifications placeholder - not yet implemented in backend properly */}
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800 dark:text-white">Config Reload</p>
+                    <p className="text-xs text-slate-500">Force reload configuration from disk.</p>
+                  </div>
+                  <button
+                    onClick={handleReload}
+                    className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-medium transition-colors"
+                  >
+                    Reload
+                  </button>
+                </div>
+              </div>
+            </section>
+
 
             {/* Window Size */}
             <section className="mb-8">
