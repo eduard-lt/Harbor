@@ -9,6 +9,7 @@ const LAST_NOTIFIED_VERSION_KEY = 'harbor_last_notified_version';
 
 interface UpdateState {
     available: boolean;
+    hasUpdate: boolean;
     version: string | null;
     url: string | null;
     loading: boolean;
@@ -18,6 +19,7 @@ interface UpdateState {
 export function useUpdateCheck() {
     const [updateState, setUpdateState] = useState<UpdateState>({
         available: false,
+        hasUpdate: false,
         version: null,
         url: null,
         loading: false,
@@ -43,7 +45,7 @@ export function useUpdateCheck() {
 
     const checkForUpdates = useCallback(async () => {
         if (!checkUpdates) {
-            setUpdateState((prev) => ({ ...prev, available: false, loading: false }));
+            setUpdateState((prev) => ({ ...prev, available: false, hasUpdate: false, loading: false }));
             return;
         }
 
@@ -114,6 +116,7 @@ export function useUpdateCheck() {
 
                 setUpdateState({
                     available: !alreadyDismissed,
+                    hasUpdate: true,
                     version: latestTag,
                     url: data.html_url,
                     loading: false,
@@ -123,6 +126,7 @@ export function useUpdateCheck() {
                 console.log('No update available');
                 setUpdateState({
                     available: false,
+                    hasUpdate: false,
                     version: latestTag,
                     url: data.html_url,
                     loading: false,

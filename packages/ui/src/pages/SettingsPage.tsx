@@ -20,7 +20,15 @@ export function SettingsPage() {
     reset,
   } = useSettings();
 
-  const { checkUpdates, toggleCheckUpdates } = useUpdateCheck();
+  const {
+    checkUpdates,
+    toggleCheckUpdates,
+    loading: updateLoading,
+    error: updateError,
+    hasUpdate: updateHasUpdate,
+    version: updateVersion,
+    refreshUpdateCheck
+  } = useUpdateCheck();
 
   const [showResetModal, setShowResetModal] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
@@ -242,6 +250,30 @@ export function SettingsPage() {
                       <div className="w-9 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
                     </label>
                   </div>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800 dark:text-white">Manual Check</p>
+                    <p className="text-xs text-slate-500">
+                      {updateLoading ? 'Checking...' :
+                        updateError ? 'Error checking updates' :
+                          updateHasUpdate ? `Update available: ${updateVersion}` :
+                            'You are up to date.'}
+                    </p>
+                    {updateError && <p className="text-xs text-red-500 mt-1">{updateError}</p>}
+                  </div>
+                  <button
+                    onClick={() => {
+                      refreshUpdateCheck();
+                      setFeedbackMessage('Checking for updates...');
+                      setTimeout(() => setFeedbackMessage(null), 3000);
+                    }}
+                    disabled={updateLoading}
+                    className="px-3 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded text-xs font-medium transition-colors disabled:opacity-50"
+                  >
+                    {updateLoading ? 'Checking...' : 'Check Now'}
+                  </button>
                 </div>
 
                 <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
