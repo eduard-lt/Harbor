@@ -6,6 +6,7 @@ import { RuleModal } from '../components/RuleModal';
 import { ConfirmationModal } from '../components/ConfirmationModal';
 import { TutorialModal } from '../components/TutorialModal';
 import type { Rule } from '../lib/tauri';
+import { formatPath } from '../lib/format';
 
 const iconColorClassesLight: Record<string, string> = {
   indigo: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400',
@@ -137,11 +138,11 @@ export function RulesPage() {
               <table className="w-full text-left">
                 <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs uppercase font-bold tracking-wider border-b border-slate-200 dark:border-slate-800">
                   <tr>
-                    <th className="px-6 py-4">Rule Name</th>
-                    <th className="px-6 py-4">Extensions</th>
-                    <th className="px-6 py-4">Destination</th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4 text-right">Actions</th>
+                    <th className="px-6 py-4 w-[15%]">Rule Name</th>
+                    <th className="px-6 py-4 w-[25%]">Extensions</th>
+                    <th className="px-6 py-4 w-[40%]">Destination</th>
+                    <th className="px-6 py-4 w-[10%] text-center">Status</th>
+                    <th className="px-6 py-4 w-[10%] text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-800 dark:text-slate-200">
@@ -175,12 +176,25 @@ export function RulesPage() {
                         </div>
                       </td>
                       <td className="px-6 py-5">
-                        <span className="font-mono text-sm text-slate-500 dark:text-slate-400 break-all">
-                          {rule.destination}
+                        <span className="font-mono text-sm text-slate-500 dark:text-slate-400 break-words">
+                          {(() => {
+                            const { parent, leaf } = formatPath(rule.destination);
+                            return (
+                              <>
+                                {parent && (
+                                  <>
+                                    {parent}
+                                    <br />
+                                  </>
+                                )}
+                                {rule.destination.includes('\\') ? '\\' : '/'}{leaf}
+                              </>
+                            );
+                          })()}
                         </span>
                       </td>
-                      <td className="px-6 py-5">
-                        <label className="relative inline-flex items-center cursor-pointer">
+                      <td className="px-6 py-5 text-center">
+                        <label className="relative inline-flex items-center cursor-pointer justify-center">
                           <input
                             type="checkbox"
                             className="sr-only peer"
@@ -190,8 +204,8 @@ export function RulesPage() {
                           <div className="w-9 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
                         </label>
                       </td>
-                      <td className="px-6 py-5 text-right">
-                        <div className="flex justify-end gap-2">
+                      <td className="px-6 py-5 text-center">
+                        <div className="flex justify-center gap-2">
                           <button
                             onClick={() => openEditModal(rule)}
                             className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-primary hover:bg-primary/10 rounded-md transition-colors cursor-pointer"
