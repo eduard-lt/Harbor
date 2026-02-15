@@ -698,4 +698,13 @@ rules:
         assert_eq!(cfg.rules.len(), 1);
         assert_eq!(cfg.rules[0].name, "test");
     }
+
+    #[test]
+    fn test_default_config() {
+        let cfg = default_config();
+        assert!(cfg.download_dir.contains("Downloads"));
+        assert_eq!(cfg.service_enabled, Some(true));
+        assert!(cfg.rules.len() > 0);
+        assert!(cfg.rules.iter().any(|r| r.name == "Images"));
+    }
 }

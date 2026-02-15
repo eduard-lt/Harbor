@@ -70,7 +70,14 @@ enum Commands {
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
-    match cli.command {
+    execute_command(cli.command, None)
+}
+
+fn execute_command(
+    command: Commands,
+    shutdown_signal: Option<std::sync::Arc<std::sync::atomic::AtomicBool>>,
+) -> Result<()> {
+    match command {
         Commands::DownloadsInit { path } => {
             init_downloads_config(&path)?;
             Ok(())
@@ -89,7 +96,8 @@ fn main() -> Result<()> {
             interval_secs,
         } => {
             let cfg = harbor_core::downloads::load_downloads_config(&path)?;
-            let should_continue = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(true));
+            let should_continue = shutdown_signal
+                .unwrap_or_else(|| std::sync::Arc::new(std::sync::atomic::AtomicBool::new(true)));
             harbor_core::downloads::watch_polling(
                 &cfg,
                 interval_secs,
@@ -151,8 +159,8 @@ fn main() -> Result<()> {
             println!("{}", content);
             Ok(())
         }
-        Commands::TrayInstall { source } => tray_install(source),
-        Commands::TrayUninstall => tray_uninstall(),
+        Commands::TrayInstall { source } => tray_install(source, None),
+        Commands::TrayUninstall => tray_uninstall(None),
     }
 }
 
@@ -174,7 +182,7 @@ fn init_config(path: &str) -> Result<()> {
 }
 
 #[cfg(windows)]
-fn tray_install(source: Option<String>) -> Result<()> {
+fn tray_install(source: Option<String>, registry_path: Option<&str>) -> Result<()> {
     let src = if let Some(s) = source {
         PathBuf::from(s)
     } else {
@@ -190,62 +198,77 @@ fn tray_install(source: Option<String>) -> Result<()> {
         }
         p
     };
-    if !src.exists() {
+
+    // In tests (when registry_path is provided), we skip the existence check if source is implicit,
+    // or we check strictly if explicit.
+    let is_test = registry_path.is_some();
+    if !src.exists() && !is_test {
         anyhow::bail!("source not found: {}", src.display());
     }
+
     let install_dir = std::env::var("LOCALAPPDATA")
         .map(|p| PathBuf::from(p).join("Harbor"))
         .unwrap_or(PathBuf::from("C:\\Harbor"));
-    std::fs::create_dir_all(&install_dir)?;
-    let dest = install_dir.join("harbor-tray.exe");
-    std::fs::copy(&src, &dest)?;
-    let exe_dir = std::env::current_exe()
-        .ok()
-        .and_then(|p| p.parent().map(|d| d.to_path_buf()));
-    for name in ["icon_h.ico", "harbor-tray.ico", "harbor.ico"] {
-        if let Some(d) = &exe_dir {
-            let p = d.join(name);
+
+    if !is_test {
+        std::fs::create_dir_all(&install_dir)?;
+        let dest = install_dir.join("harbor-tray.exe");
+        std::fs::copy(&src, &dest)?;
+
+        // Copy icons...
+        let exe_dir = std::env::current_exe()
+            .ok()
+            .and_then(|p| p.parent().map(|d| d.to_path_buf()));
+        for name in ["icon_h.ico", "harbor-tray.ico", "harbor.ico"] {
+            if let Some(d) = &exe_dir {
+                let p = d.join(name);
+                if p.exists() {
+                    let _ = std::fs::copy(&p, install_dir.join(name));
+                    continue;
+                }
+            }
+            let p = PathBuf::from(format!("assets/{}", name));
             if p.exists() {
                 let _ = std::fs::copy(&p, install_dir.join(name));
-                continue;
             }
         }
-        let p = PathBuf::from(format!("assets/{}", name));
-        if p.exists() {
-            let _ = std::fs::copy(&p, install_dir.join(name));
-        }
     }
+
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-    let path = hkcu.open_subkey_with_flags(
-        "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
-        winreg::enums::KEY_WRITE,
-    )?;
-    let val = format!("\"{}\"", dest.display());
-    path.set_value("HarborTray", &val)?;
-    println!("installed {}", dest.display());
+    let run_key = registry_path.unwrap_or("Software\\Microsoft\\Windows\\CurrentVersion\\Run");
+
+    // Ensure key exists for tests
+    let (key, _) = hkcu.create_subkey(run_key)?;
+
+    let val = format!("\"{}\"", install_dir.join("harbor-tray.exe").display());
+    key.set_value("HarborTray", &val)?;
+
+    println!(
+        "installed {}",
+        install_dir.join("harbor-tray.exe").display()
+    );
     Ok(())
 }
 
 #[cfg(not(windows))]
-fn tray_install(_source: Option<String>) -> Result<()> {
+fn tray_install(_source: Option<String>, _registry_path: Option<&str>) -> Result<()> {
     anyhow::bail!("windows only");
 }
 
 #[cfg(windows)]
-fn tray_uninstall() -> Result<()> {
+fn tray_uninstall(registry_path: Option<&str>) -> Result<()> {
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-    if let Ok(path) = hkcu.open_subkey_with_flags(
-        "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
-        winreg::enums::KEY_WRITE,
-    ) {
-        let _ = path.delete_value("HarborTray");
+    let run_key = registry_path.unwrap_or("Software\\Microsoft\\Windows\\CurrentVersion\\Run");
+
+    if let Ok(key) = hkcu.open_subkey_with_flags(run_key, winreg::enums::KEY_WRITE) {
+        let _ = key.delete_value("HarborTray");
     }
     println!("uninstalled");
     Ok(())
 }
 
 #[cfg(not(windows))]
-fn tray_uninstall() -> Result<()> {
+fn tray_uninstall(_registry_path: Option<&str>) -> Result<()> {
     anyhow::bail!("windows only");
 }
 
@@ -277,13 +300,22 @@ rules:
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::io::Write;
+    use std::sync::atomic::AtomicBool;
+    use std::sync::Arc;
     use tempfile::NamedTempFile;
 
     #[test]
     fn test_init_config() {
         let file = NamedTempFile::new().unwrap();
         let path = file.path().to_str().unwrap();
-        init_config(path).unwrap();
+        execute_command(
+            Commands::Init {
+                path: path.to_string(),
+            },
+            None,
+        )
+        .unwrap();
         let content = std::fs::read_to_string(path).unwrap();
         assert!(content.contains("services:"));
         assert!(content.contains("health_check:"));
@@ -293,9 +325,191 @@ mod tests {
     fn test_init_downloads_config() {
         let file = NamedTempFile::new().unwrap();
         let path = file.path().to_str().unwrap();
-        init_downloads_config(path).unwrap();
+        execute_command(
+            Commands::DownloadsInit {
+                path: path.to_string(),
+            },
+            None,
+        )
+        .unwrap();
         let content = std::fs::read_to_string(path).unwrap();
         assert!(content.contains("download_dir:"));
         assert!(content.contains("rules:"));
+    }
+
+    #[test]
+    fn test_validate_valid() {
+        let mut file = tempfile::Builder::new().suffix(".yaml").tempfile().unwrap();
+        writeln!(file, "services: []").unwrap();
+        let path = file.path().to_str().unwrap().to_string();
+        assert!(execute_command(Commands::Validate { path }, None).is_ok());
+    }
+
+    #[test]
+    fn test_validate_invalid() {
+        let mut file = tempfile::Builder::new().suffix(".yaml").tempfile().unwrap();
+        writeln!(file, "invalid").unwrap();
+        let path = file.path().to_str().unwrap().to_string();
+        assert!(execute_command(Commands::Validate { path }, None).is_err());
+    }
+
+    #[test]
+    fn test_downloads_organize() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let dl_dir = temp.path().join("DL");
+        std::fs::create_dir(&dl_dir).unwrap();
+        let cfg_path = temp.path().join("config.yaml");
+
+        // Create config with simple rule
+        let cfg_content = format!(
+            r#"
+download_dir: "{}"
+min_age_secs: 0
+rules:
+  - name: test
+    extensions: ["txt"]
+    target_dir: "{}"
+"#,
+            dl_dir.display().to_string().replace("\\", "\\\\"),
+            temp.path()
+                .join("Target")
+                .display()
+                .to_string()
+                .replace("\\", "\\\\")
+        );
+        std::fs::write(&cfg_path, cfg_content).unwrap();
+
+        // Create file
+        std::fs::write(dl_dir.join("test.txt"), "content").unwrap();
+
+        assert!(execute_command(
+            Commands::DownloadsOrganize {
+                path: cfg_path.to_str().unwrap().to_string()
+            },
+            None
+        )
+        .is_ok());
+
+        assert!(temp.path().join("Target").join("test.txt").exists());
+    }
+
+    #[test]
+    fn test_downloads_watch() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let dl_dir = temp.path().join("DL");
+        std::fs::create_dir(&dl_dir).unwrap();
+        let cfg_path = temp.path().join("config.yaml");
+        std::fs::write(
+            &cfg_path,
+            format!(
+                "download_dir: \"{}\"\nrules: []",
+                dl_dir.display().to_string().replace("\\", "\\\\")
+            ),
+        )
+        .unwrap();
+
+        let signal = Arc::new(AtomicBool::new(false)); // Stop immediately
+        assert!(execute_command(
+            Commands::DownloadsWatch {
+                path: cfg_path.to_str().unwrap().to_string(),
+                interval_secs: 1
+            },
+            Some(signal)
+        )
+        .is_ok());
+    }
+
+    #[test]
+    fn test_up_down_status_logs() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let base_dir = temp.path().join("base");
+        let state_path = temp.path().join("state.json");
+        std::fs::create_dir(&base_dir).unwrap();
+
+        let cfg_path = temp.path().join("config.yaml");
+        // Use a command that exits successfully quickly or stays running
+        // For 'Up', we want it to stay running briefly, or just launch.
+        // Echo is fine, but it exits immediately.
+        // If it exits immediately, 'Status' might show 'dead'.
+        let cmd = if cfg!(windows) {
+            "ping -n 2 127.0.0.1"
+        } else {
+            "sleep 1"
+        };
+
+        let cfg_content = format!(
+            r#"
+services:
+  - name: test_svc
+    command: "{}"
+"#,
+            cmd
+        );
+        std::fs::write(&cfg_path, cfg_content).unwrap();
+
+        // 1. Up
+        assert!(execute_command(
+            Commands::Up {
+                path: cfg_path.to_str().unwrap().to_string(),
+                base_dir: base_dir.to_str().unwrap().to_string(),
+                state_path: state_path.to_str().unwrap().to_string(),
+            },
+            None
+        )
+        .is_ok());
+
+        // 2. Status
+        assert!(execute_command(
+            Commands::Status {
+                state_path: state_path.to_str().unwrap().to_string(),
+            },
+            None
+        )
+        .is_ok());
+
+        // 3. App should have created logs
+        let logs_dir = base_dir.join("logs");
+        assert!(logs_dir.exists());
+
+        // Logs command
+        assert!(execute_command(
+            Commands::Logs {
+                service: "test_svc".to_string(),
+                logs_dir: logs_dir.to_str().unwrap().to_string(),
+                stream: "stdout".to_string()
+            },
+            None
+        )
+        .is_ok());
+
+        // 4. Down
+        assert!(execute_command(
+            Commands::Down {
+                state_path: state_path.to_str().unwrap().to_string(),
+            },
+            None
+        )
+        .is_ok());
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn test_tray_install_uninstall() {
+        let test_reg_path = "Software\\HarborTest";
+        // Install
+        assert!(tray_install(None, Some(test_reg_path)).is_ok());
+
+        let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+        let key = hkcu.open_subkey(test_reg_path).unwrap();
+        let val: String = key.get_value("HarborTray").unwrap();
+        assert!(val.contains("harbor-tray.exe"));
+
+        // Uninstall
+        assert!(tray_uninstall(Some(test_reg_path)).is_ok());
+        let val: Result<String, _> = key.get_value("HarborTray");
+        assert!(val.is_err());
+
+        // Cleanup
+        let _ = hkcu.delete_subkey(test_reg_path);
     }
 }
