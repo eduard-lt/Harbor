@@ -10,6 +10,7 @@
         "core:window:allow-set-size",
         "core:window:allow-center",
         "dialog:default",
-        "shell:allow-open"
+        "shell:allow-open",
+        "notification:default"
     ]
 }

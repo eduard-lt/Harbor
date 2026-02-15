@@ -215,19 +215,7 @@ export function SettingsPage() {
                     <div className="w-9 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
                   </label>
                 </div>
-                <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
-                  {/* Notifications placeholder - not yet implemented in backend properly */}
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800 dark:text-white">Config Reload</p>
-                    <p className="text-xs text-slate-500">Force reload configuration from disk.</p>
-                  </div>
-                  <button
-                    onClick={handleReload}
-                    className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-medium transition-colors"
-                  >
-                    Reload
-                  </button>
-                </div>
+
               </div>
             </section>
 
@@ -243,15 +231,17 @@ export function SettingsPage() {
                     <p className="text-sm font-semibold text-slate-800 dark:text-white">Check for Updates</p>
                     <p className="text-xs text-slate-500">Notify me when a new version is available.</p>
                   </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="sr-only peer"
-                      checked={checkUpdates}
-                      onChange={toggleCheckUpdates}
-                    />
-                    <div className="w-9 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                  </label>
+                  <div className="flex items-center gap-4">
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={checkUpdates}
+                        onChange={toggleCheckUpdates}
+                      />
+                      <div className="w-9 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                    </label>
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">

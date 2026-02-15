@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import packageJson from '../../package.json';
 
+import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification';
+
 const GITHUB_REPO = 'eduard-lt/Harbor';
 const CHECK_UPDATES_KEY = 'harbor_check_updates';
 const LAST_NOTIFIED_VERSION_KEY = 'harbor_last_notified_version';
@@ -27,6 +29,9 @@ export function useUpdateCheck() {
         const stored = localStorage.getItem(CHECK_UPDATES_KEY);
         return stored === null ? true : stored === 'true';
     });
+
+    // Listen for notification clicks - NOW HANDLED GLOBALLY IN App.tsx
+    // useEffect(() => { ... }, []);
 
     const toggleCheckUpdates = useCallback(() => {
         setCheckUpdates((prev) => {
@@ -62,17 +67,50 @@ export function useUpdateCheck() {
             // Better approach: strip 'v' and use localeCompare with numeric options or split.
 
             const cleanLatest = latestTag.replace(/^v/, '');
+            const currentVersion = `v${packageJson.version}`;
             const cleanCurrent = packageJson.version;
 
             const isNewer = compareVersions(cleanLatest, cleanCurrent) > 0;
+            const lastNotified = localStorage.getItem(LAST_NOTIFIED_VERSION_KEY);
+
+            console.log('Update Check Debug:', {
+                latestTag,
+                currentVersion,
+                cleanLatest,
+                cleanCurrent,
+                isNewer,
+                lastNotified
+            });
+            // Only show if we haven't notified for this specific version yet OR if the user hasn't dismissed it
+            // The requirement says: "another notification will be only if there will be a 1.2.2 release etc"
+            // This implies if they dismissed 1.2.1, they don't see it again.
+
+            const alreadyDismissed = lastNotified === latestTag;
 
             if (isNewer) {
-                const lastNotified = localStorage.getItem(LAST_NOTIFIED_VERSION_KEY);
-                // Only show if we haven't notified for this specific version yet OR if the user hasn't dismissed it
-                // The requirement says: "another notification will be only if there will be a 1.2.2 release etc"
-                // This implies if they dismissed 1.2.1, they don't see it again.
+                if (alreadyDismissed) {
+                    console.log('Update dismissed for version:', latestTag);
+                } else {
+                    // Send native notification
+                    (async () => {
+                        try {
+                            let granted = await isPermissionGranted();
+                            if (!granted) {
+                                const permission = await requestPermission();
+                                granted = permission === 'granted';
+                            }
 
-                const alreadyDismissed = lastNotified === latestTag;
+                            if (granted) {
+                                await sendNotification({
+                                    title: 'Harbor Update Available',
+                                    body: `A new version (${latestTag}) is available! Click to view.`,
+                                });
+                            }
+                        } catch (e) {
+                            console.error('Failed to send notification:', e);
+                        }
+                    })();
+                }
 
                 setUpdateState({
                     available: !alreadyDismissed,
@@ -82,6 +120,7 @@ export function useUpdateCheck() {
                     error: null,
                 });
             } else {
+                console.log('No update available');
                 setUpdateState({
                     available: false,
                     version: latestTag,
@@ -111,6 +150,8 @@ export function useUpdateCheck() {
             setUpdateState((prev) => ({ ...prev, available: false }));
         }
     }, [updateState.version]);
+
+
 
     return {
         ...updateState,

@@ -1,6 +1,7 @@
 import { open } from '@tauri-apps/plugin-shell';
 import { Header } from '../components/Header';
 import { useState } from 'react';
+import { useUpdateCheck } from '../hooks/useUpdateCheck';
 
 // ... inside component ...
 
@@ -22,6 +23,7 @@ import { useState } from 'react';
 </div>
 
 export function InfoPage() {
+    const { available, version, url } = useUpdateCheck();
     const [activeTab, setActiveTab] = useState<'guide' | 'about'>('guide');
 
     return (
@@ -29,6 +31,26 @@ export function InfoPage() {
             <Header title="Info & Guide" subtitle="Learn how to get the most out of Harbor." />
 
             <div className="p-12 max-w-4xl mx-auto w-full overflow-y-auto custom-scrollbar">
+                {/* Update Banner */}
+                {available && url && (
+                    <div className="mb-8 p-4 bg-primary/10 border border-primary/20 rounded-xl flex items-center justify-between animate-in fade-in slide-in-from-top-4">
+                        <div className="flex items-center gap-4">
+                            <span className="material-icons-round text-primary text-2xl">new_releases</span>
+                            <div>
+                                <h3 className="font-bold text-slate-800 dark:text-white">Update Available!</h3>
+                                <p className="text-sm text-slate-600 dark:text-slate-400">Version {version} is ready to download.</p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => open(url)}
+                            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium flex items-center gap-2"
+                        >
+                            <span className="material-icons-round text-sm">open_in_new</span>
+                            Download
+                        </button>
+                    </div>
+                )}
+
                 {/* Tabs */}
                 <div className="flex space-x-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl mb-8 w-fit">
                     <button

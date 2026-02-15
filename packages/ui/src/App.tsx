@@ -8,6 +8,7 @@ import { SettingsPage } from './pages/SettingsPage';
 import { InfoPage } from './pages/InfoPage';
 import { useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event';
+import { useWindowSize } from './hooks/useWindowSize';
 
 function GlobalNavigationListener() {
   const navigate = useNavigate();
@@ -41,8 +42,6 @@ function GlobalContextMenuListener() {
 
   return null;
 }
-
-import { useWindowSize } from './hooks/useWindowSize';
 
 function App() {
   // Initialize window size persistence
