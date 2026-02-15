@@ -704,7 +704,7 @@ rules:
         let cfg = default_config();
         assert!(cfg.download_dir.contains("Downloads"));
         assert_eq!(cfg.service_enabled, Some(true));
-        assert!(cfg.rules.len() > 0);
+        assert!(!cfg.rules.is_empty());
         assert!(cfg.rules.iter().any(|r| r.name == "Images"));
     }
 }

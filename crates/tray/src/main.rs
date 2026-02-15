@@ -56,7 +56,7 @@ fn main() -> Result<()> {
     let mut ui = TrayState::default();
 
     // We modify ui fields in place
-    let _window = nwg::Window::builder()
+    nwg::Window::builder()
         .flags(nwg::WindowFlags::POPUP)
         .size((300, 300))
         .title("Harbor Tray")

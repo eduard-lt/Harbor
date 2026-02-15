@@ -71,6 +71,7 @@ impl TrayLogic {
         }
     }
 
+    #[allow(dead_code)]
     pub fn with_log_path(mut self, path: PathBuf) -> Self {
         self.log_path = path;
         self

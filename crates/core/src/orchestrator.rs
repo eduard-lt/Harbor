@@ -222,11 +222,7 @@ mod tests {
 
         let s = Service {
             name: "test".to_string(),
-            command: if cfg!(windows) {
-                "echo hello".to_string()
-            } else {
-                "echo hello".to_string()
-            },
+            command: "echo hello".to_string(),
             cwd: None,
             env: Some([(String::from("TEST_VAR"), String::from("val"))].into()),
             depends_on: None,
