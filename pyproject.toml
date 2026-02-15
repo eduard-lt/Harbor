@@ -31,6 +31,18 @@ cmd = "powershell -ExecutionPolicy Bypass -File tools/cleanup.ps1"
 help = "Start development server (Hot Reload)"
 cmd = "npm run tauri:dev --prefix packages/ui"
 
+[tool.poe.tasks.test]
+help = "Run unit tests"
+cmd = "cargo test"
+
+[tool.poe.tasks.coverage]
+help = "Run tests with coverage and open HTML report"
+cmd = "cargo llvm-cov --open"
+
+[tool.poe.tasks.install-coverage-tools]
+help = "Install cargo-llvm-cov"
+cmd = "cargo install cargo-llvm-cov"
+
 # ============================================================================
 # LEGACY / ALIAS TASKS
 # ============================================================================
