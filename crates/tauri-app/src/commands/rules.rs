@@ -327,3 +327,42 @@ pub async fn get_download_dir(state: State<'_, AppState>) -> Result<String, Stri
     let config = state.config.read().map_err(|e| e.to_string())?;
     Ok(config.download_dir.clone())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_derive_icon() {
+        assert_eq!(derive_icon(Some(&vec!["jpg".to_string()])), "image");
+        assert_eq!(derive_icon(Some(&vec!["mp4".to_string()])), "movie");
+        assert_eq!(derive_icon(Some(&vec!["mp3".to_string()])), "music_note");
+        assert_eq!(derive_icon(Some(&vec!["pdf".to_string()])), "description");
+        assert_eq!(derive_icon(Some(&vec!["xlsx".to_string()])), "table_chart");
+        assert_eq!(derive_icon(Some(&vec!["zip".to_string()])), "folder_zip");
+        assert_eq!(
+            derive_icon(Some(&vec!["exe".to_string()])),
+            "install_desktop"
+        );
+        assert_eq!(
+            derive_icon(Some(&vec!["unknown".to_string()])),
+            "insert_drive_file"
+        );
+        assert_eq!(derive_icon(None), "insert_drive_file");
+    }
+
+    #[test]
+    fn test_derive_icon_color() {
+        assert_eq!(derive_icon_color(Some(&vec!["jpg".to_string()])), "indigo");
+        assert_eq!(derive_icon_color(Some(&vec!["mp4".to_string()])), "purple");
+        assert_eq!(derive_icon_color(Some(&vec!["mp3".to_string()])), "pink");
+        assert_eq!(derive_icon_color(Some(&vec!["pdf".to_string()])), "amber");
+        assert_eq!(derive_icon_color(Some(&vec!["zip".to_string()])), "slate");
+        assert_eq!(derive_icon_color(Some(&vec!["exe".to_string()])), "red");
+        assert_eq!(
+            derive_icon_color(Some(&vec!["unknown".to_string()])),
+            "slate"
+        );
+        assert_eq!(derive_icon_color(None), "slate");
+    }
+}

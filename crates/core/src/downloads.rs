@@ -671,4 +671,23 @@ mod tests {
         assert_eq!(count, 1);
         assert!(!symlink_path.exists());
     }
+
+    #[test]
+    fn test_load_downloads_config() {
+        let mut file = tempfile::Builder::new().suffix(".yaml").tempfile().unwrap();
+        writeln!(
+            file,
+            r#"
+download_dir: "C:\\Downloads"
+rules:
+  - name: test
+    target_dir: "C:\\Target"
+"#
+        )
+        .unwrap();
+
+        let cfg = load_downloads_config(file.path()).unwrap();
+        assert_eq!(cfg.rules.len(), 1);
+        assert_eq!(cfg.rules[0].name, "test");
+    }
 }

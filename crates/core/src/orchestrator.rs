@@ -213,4 +213,75 @@ mod tests {
         let res = topo_order(&services);
         assert!(res.is_err());
     }
+
+    #[test]
+    fn test_spawn_service_echo() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let logs = temp.path().join("logs");
+        std::fs::create_dir(&logs).unwrap();
+
+        let s = Service {
+            name: "test".to_string(),
+            command: if cfg!(windows) {
+                "echo hello".to_string()
+            } else {
+                "echo hello".to_string()
+            },
+            cwd: None,
+            env: Some([(String::from("TEST_VAR"), String::from("val"))].into()),
+            depends_on: None,
+            health_check: None,
+        };
+
+        let res = spawn_service(temp.path(), &logs, &s).unwrap();
+        assert_eq!(res.name, "test");
+        assert!(res.pid > 0);
+
+        // Wait a bit for output
+        std::thread::sleep(std::time::Duration::from_millis(50));
+        let out = std::fs::read_to_string(&res.stdout_log).unwrap();
+        assert!(out.trim().contains("hello"));
+    }
+
+    #[test]
+    fn test_up_and_down() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let state_path = temp.path().join("state.json");
+
+        let s1 = Service {
+            name: "s1".to_string(),
+            command: if cfg!(windows) {
+                // Ping for a few seconds to simulate a running service
+                "ping -n 5 127.0.0.1 > nul".to_string()
+            } else {
+                "sleep 5".to_string()
+            },
+            cwd: None,
+            env: None,
+            depends_on: None,
+            health_check: None,
+        };
+
+        let cfg = WorkspaceConfig { services: vec![s1] };
+
+        let state = up(&cfg, temp.path(), &state_path).unwrap();
+        assert_eq!(state.services.len(), 1);
+        let pid = state.services[0].pid;
+
+        // Check status
+        let st = status(&state_path).unwrap();
+        assert_eq!(st.len(), 1);
+        assert_eq!(st[0].1, pid);
+        assert!(st[0].2); // should be alive
+
+        // Down
+        down(&state_path).unwrap();
+
+        // Wait bit for kill
+        std::thread::sleep(std::time::Duration::from_millis(100));
+
+        let mut sys = System::new();
+        sys.refresh_processes(ProcessesToUpdate::Some(&[Pid::from_u32(pid as u32)]), true);
+        assert!(sys.process(Pid::from_u32(pid as u32)).is_none());
+    }
 }

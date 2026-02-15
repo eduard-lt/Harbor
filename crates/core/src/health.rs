@@ -115,4 +115,26 @@ mod tests {
         };
         assert!(wait_ready(&hc).is_err());
     }
+
+    #[test]
+    fn test_wait_ready_tcp_success() {
+        // Find a random free port
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+
+        // Spawn a thread to accept connections (simulating a server)
+        thread::spawn(move || {
+            let _ = listener.accept();
+        });
+
+        let hc = HealthCheck {
+            kind: HealthCheckKind::Tcp,
+            command: None,
+            url: None,
+            tcp_port: Some(port),
+            timeout_ms: Some(1000),
+            retries: Some(3),
+        };
+        assert!(wait_ready(&hc).is_ok());
+    }
 }

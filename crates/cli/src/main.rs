@@ -273,3 +273,29 @@ rules:
     println!("created {}", path);
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::NamedTempFile;
+
+    #[test]
+    fn test_init_config() {
+        let file = NamedTempFile::new().unwrap();
+        let path = file.path().to_str().unwrap();
+        init_config(path).unwrap();
+        let content = std::fs::read_to_string(path).unwrap();
+        assert!(content.contains("services:"));
+        assert!(content.contains("health_check:"));
+    }
+
+    #[test]
+    fn test_init_downloads_config() {
+        let file = NamedTempFile::new().unwrap();
+        let path = file.path().to_str().unwrap();
+        init_downloads_config(path).unwrap();
+        let content = std::fs::read_to_string(path).unwrap();
+        assert!(content.contains("download_dir:"));
+        assert!(content.contains("rules:"));
+    }
+}
