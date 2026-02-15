@@ -33,7 +33,7 @@ This project follows a simple principle: **Be kind and respectful**. We're all h
 ### 🐛 Reporting Bugs
 
 Before submitting a bug report:
-1. Check the [existing issues](https://github.com/Eduard2609/Harbor/issues) to avoid duplicates
+1. Check the [existing issues](https://github.com/eduard-lt/Harbor/issues) to avoid duplicates
 2. Collect information about the bug:
    - Harbor version (`harbor-cli --version`)
    - Windows version
@@ -42,7 +42,7 @@ Before submitting a bug report:
    - Error messages or logs from `recent_moves.log`
    - Your configuration (remove sensitive paths if any)
 
-**Submit bugs using our [GitHub Issues](https://github.com/Eduard2609/Harbor/issues/new)** with the "bug" label.
+**Submit bugs using our [GitHub Issues](https://github.com/eduard-lt/Harbor/issues/new)** with the "bug" label.
 
 ### 💡 Suggesting Features
 
@@ -101,7 +101,7 @@ See the sections below for development setup and workflow.
 
 ```powershell
 # Clone the repository
-git clone https://github.com/Eduard2609/Harbor.git
+git clone https://github.com/eduard-lt/Harbor.git
 cd Harbor
 
 # Build all crates
@@ -458,8 +458,8 @@ poe bump-major
 
 ## Questions?
 
-- 💬 Open a [Discussion](https://github.com/Eduard2609/Harbor/discussions)
-- 🐛 Report bugs via [Issues](https://github.com/Eduard2609/Harbor/issues)
+- 💬 Open a [Discussion](https://github.com/eduard-lt/Harbor/discussions)
+- 🐛 Report bugs via [Issues](https://github.com/eduard-lt/Harbor/issues)
 - 📧 Contact: [Your contact method]
 
 ---

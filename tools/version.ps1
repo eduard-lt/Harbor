@@ -98,6 +98,24 @@ function Set-Version {
         Write-Host "  ! tauri.conf.json not found" -ForegroundColor Yellow
     }
 
+    # Update packages/ui/package.json
+    $UiPackageJson = Join-Path $RootDir "packages\ui\package.json"
+    if (Test-Path $UiPackageJson) {
+        $uiContent = Get-Content $UiPackageJson -Raw
+        # Replace "version": "X.Y.Z" with "version": "$NewVersion"
+        if ($uiContent -match '"version":\s*"[^"]+"') {
+            $uiContent = $uiContent -replace '"version":\s*"[^"]+"', "`"version`": `"$NewVersion`""
+            Set-Content $UiPackageJson $uiContent -NoNewline
+            Write-Host "  - packages\ui\package.json" -ForegroundColor Gray
+        }
+        else {
+            Write-Host "  ! Version string not found in packages/ui/package.json" -ForegroundColor Yellow
+        }
+    }
+    else {
+        Write-Host "  ! packages/ui/package.json not found" -ForegroundColor Yellow
+    }
+
     # Update Poe help strings
     Update-Poe-Help $NewVersion
 }

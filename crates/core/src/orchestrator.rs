@@ -73,9 +73,15 @@ fn spawn_service(base_dir: &Path, logs_dir: &Path, s: &Service) -> Result<Runnin
     cmd.stderr(Stdio::from(err_file));
     let child: Child = cmd.spawn().context("spawn")?;
     let pid = child.id() as i32;
+    let mut sys = System::new_all();
+    sys.refresh_processes(ProcessesToUpdate::Some(&[Pid::from_u32(pid as u32)]), true);
+    let start_time = sys
+        .process(Pid::from_u32(pid as u32))
+        .map(|p| p.start_time());
     Ok(RunningService {
         name: s.name.clone(),
         pid,
+        start_time,
         stdout_log: out_path,
         stderr_log: err_path,
     })
@@ -119,6 +125,11 @@ pub fn down(state_path: impl AsRef<Path>) -> Result<()> {
     sys.refresh_processes(ProcessesToUpdate::All, true);
     for s in st.services {
         if let Some(proc_) = sys.process(Pid::from_u32(s.pid as u32)) {
+            if let Some(st_time) = s.start_time {
+                if proc_.start_time() != st_time {
+                    continue;
+                }
+            }
             let _ = proc_.kill();
         }
     }
@@ -133,7 +144,16 @@ pub fn status(state_path: impl AsRef<Path>) -> Result<Vec<(String, i32, bool)>> 
     let mut res = Vec::new();
     if let Some(st) = st {
         for s in st.services {
-            let alive = sys.process(Pid::from_u32(s.pid as u32)).is_some();
+            let mut alive = false;
+            if let Some(proc_) = sys.process(Pid::from_u32(s.pid as u32)) {
+                if let Some(st_time) = s.start_time {
+                    if proc_.start_time() == st_time {
+                        alive = true;
+                    }
+                } else {
+                    alive = true; // Fallback for old state without start_time
+                }
+            }
             res.push((s.name, s.pid, alive));
         }
     }

@@ -136,7 +136,7 @@ export function Sidebar() {
         {/* External Links */}
         <div className="space-y-2">
           <button
-            onClick={() => open('https://github.com/Eduard2609/Harbor')}
+            onClick={() => open('https://github.com/eduard-lt/Harbor')}
             className="w-full flex items-center gap-4 px-4 py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group cursor-pointer"
             title="GitHub Repository"
           >

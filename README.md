@@ -7,8 +7,8 @@
 <img src="assets/harbor_h.png" alt="Harbor Logo" width="400">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Windows](https://img.shields.io/badge/platform-Windows-blue.svg)](https://github.com/Eduard2609/Harbor/releases)
-[![GitHub release](https://img.shields.io/github/v/release/Eduard2609/Harbor)](https://github.com/Eduard2609/Harbor/releases/latest)
+[![Windows](https://img.shields.io/badge/platform-Windows-blue.svg)](https://github.com/eduard-lt/Harbor/releases)
+[![GitHub release](https://img.shields.io/github/v/release/eduard-lt/Harbor)](https://github.com/eduard-lt/Harbor/releases/latest)
 
 [Features](#-features) •
 [Installation](#-installation) •
@@ -53,14 +53,14 @@ Perfect for anyone tired of digging through a cluttered Downloads folder!
 
 ### Option 1: MSI Installer (Recommended)
 
-1. Download the latest `.msi` installer from the [Releases page](https://github.com/Eduard2609/Harbor/releases)
+1. Download the latest `.msi` installer from the [Releases page](https://github.com/eduard-lt/Harbor/releases)
 2. Run `harbor-tray-x.x.x-x86_64.msi`
 3. Harbor automatically starts and adds itself to your system tray
 4. That's it! Your downloads will now be organized automatically
 
 ### Option 2: Portable Executables
 
-1. Download `harbor-tray.exe` and `harbor-cli.exe` from [Releases](https://github.com/Eduard2609/Harbor/releases)
+1. Download `harbor-tray.exe` and `harbor-cli.exe` from [Releases](https://github.com/eduard-lt/Harbor/releases)
 2. Place them in a folder of your choice
 3. Run `harbor-tray.exe` to start the tray application
 4. (Optional) Use `harbor-cli.exe` for command-line operations
@@ -313,8 +313,8 @@ Please feel free to open an issue or submit a pull request!
 Need help or have questions?
 
 - 📖 Check the [Documentation](#-configuration)
-- 🐛 Report bugs via [GitHub Issues](https://github.com/Eduard2609/Harbor/issues)
-- 💡 Request features via [GitHub Issues](https://github.com/Eduard2609/Harbor/issues)
+- 🐛 Report bugs via [GitHub Issues](https://github.com/eduard-lt/Harbor/issues)
+- 💡 Request features via [GitHub Issues](https://github.com/eduard-lt/Harbor/issues)
 - ⭐ Star the project if you find it useful!
 
 ---

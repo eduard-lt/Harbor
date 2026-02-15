@@ -7,6 +7,8 @@ use std::path::{Path, PathBuf};
 pub struct RunningService {
     pub name: String,
     pub pid: i32,
+    #[serde(default)]
+    pub start_time: Option<u64>,
     pub stdout_log: PathBuf,
     pub stderr_log: PathBuf,
 }

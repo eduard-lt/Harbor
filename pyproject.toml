@@ -1,6 +1,6 @@
 [project]
 name = "harbor"
-version = "1.1.4"
+version = "1.1.5"
 description = "Harbor specific tasks"
 
 # ============================================================================
@@ -48,15 +48,15 @@ help = "Show current version"
 cmd = "powershell -ExecutionPolicy Bypass -File tools/version.ps1 show"
 
 [tool.poe.tasks.bump-patch]
-help = "Bump patch version (1.1.4 -> 1.1.5)"
+help = "Bump patch version (1.1.5 -> 1.1.6)"
 cmd = "powershell -ExecutionPolicy Bypass -File tools/version.ps1 bump-patch"
 
 [tool.poe.tasks.bump-minor]
-help = "Bump minor version (1.1.4 -> 1.2.0)"
+help = "Bump minor version (1.1.5 -> 1.2.0)"
 cmd = "powershell -ExecutionPolicy Bypass -File tools/version.ps1 bump-minor"
 
 [tool.poe.tasks.bump-major]
-help = "Bump major version (1.1.4 -> 2.0.0)"
+help = "Bump major version (1.1.5 -> 2.0.0)"
 cmd = "powershell -ExecutionPolicy Bypass -File tools/version.ps1 bump-major"
 
 [tool.poe.tasks.git-release]

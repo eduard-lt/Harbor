@@ -12,6 +12,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GUI for editing rules
 - Log viewer with search and filters
 - Dry-run mode for testing rules
+## [1.1.4] - 2026-02-15
+
+### Fixed
+- **UI Padding & Layout**:
+  - Increased `Header` top padding to `pt-10` and minimum height to `6rem` to prevent conflict with window controls.
+  - Aligned Sidebar logo padding (`pt-10`) to match the new Header layout.
+  - Adjusted content padding on `Settings`, `Rules`, `Activity`, and `Info` pages.
+- **Button Interaction**: Added `cursor: pointer` to all buttons, Sidebar links, and Rule action buttons.
+- **Theme Selection**: Fixed deformed checkmark circle in Settings page.
+- **Version Sync**: access to `tauri.conf.json` is now synchronized with `Cargo.toml` and `pyproject.toml` during version bumps.
+
+### Added
+- **Release Automation**:
+  - New `poe git-release` command to automatically tag and push releases.
+  - Dynamic `poe` help strings in `pyproject.toml` that reflect the current version state.
+- **Documentation**: Updated repository URLs to `eduard-lt/Harbor`.
+
+## [1.1.0] - 2025-02-10
+- Initial UI release.
 
 ## [0.6.0] - 2025-01-20
 
@@ -119,5 +138,6 @@ rules:
     create_symlink: false  # optional
 ```
 
-[Unreleased]: https://github.com/Eduard2609/Harbor/compare/v0.6.0...HEAD
-[0.6.0]: https://github.com/Eduard2609/Harbor/releases/tag/v0.6.0
+[Unreleased]: https://github.com/eduard-lt/Harbor/compare/v1.1.4...HEAD
+[1.1.4]: https://github.com/eduard-lt/Harbor/releases/tag/v1.1.4
+[0.6.0]: https://github.com/eduard-lt/Harbor/releases/tag/v0.6.0

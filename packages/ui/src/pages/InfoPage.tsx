@@ -6,7 +6,7 @@ import { useState } from 'react';
 
 <div className="flex justify-center gap-4">
     <button
-        onClick={() => open('https://github.com/Eduard2609/Harbor')}
+        onClick={() => open('https://github.com/eduard-lt/Harbor')}
         className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
     >
         <span className="material-icons-round text-lg">code</span>
@@ -117,7 +117,7 @@ export function InfoPage() {
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 text-center py-12">
                         <img src="/harbor.svg" alt="Logo" className="w-24 h-24 mx-auto mb-6" />
                         <h2 className="text-3xl font-bold text-slate-800 dark:text-white mb-2">Harbor</h2>
-                        <p className="text-slate-500 mb-8">Version 1.1.4</p>
+                        <p className="text-slate-500 mb-8">Version 1.1.5</p>
 
                         <p className="max-w-lg mx-auto text-slate-600 dark:text-slate-400 mb-8">
                             Harbor is a free, open-source utility designed to keep your digital life organized.
@@ -125,7 +125,7 @@ export function InfoPage() {
                         </p>
 
                         <div className="flex justify-center gap-4">
-                            <a href="https://github.com/Eduard2609/Harbor" target="_blank" rel="noreferrer" className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors">
+                            <a href="https://github.com/eduard-lt/Harbor" target="_blank" rel="noreferrer" className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors">
                                 <span className="material-icons-round text-lg">code</span>
                                 GitHub
                             </a>
