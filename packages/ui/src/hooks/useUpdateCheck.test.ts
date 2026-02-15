@@ -28,7 +28,7 @@ describe('useUpdateCheck', () => {
     it('should detect an update', async () => {
         const mockRelease = {
             tag_name: 'v1.2.1',
-            html_url: 'https://github.com/eduard-lt/Harbor/releases/tag/v1.2.1',
+            html_url: 'https://github.com/eduard-lt/Harbor-Download-Organizer/releases/tag/v1.2.1',
         };
 
         (global.fetch as any).mockResolvedValue({
@@ -50,7 +50,7 @@ describe('useUpdateCheck', () => {
     it('should not detect update if version is same or older', async () => {
         const mockRelease = {
             tag_name: 'v1.2.0',
-            html_url: 'https://github.com/eduard-lt/Harbor/releases/tag/v1.2.0',
+            html_url: 'https://github.com/eduard-lt/Harbor-Download-Organizer/releases/tag/v1.2.0',
         };
 
         (global.fetch as any).mockResolvedValue({
@@ -94,7 +94,7 @@ describe('useUpdateCheck', () => {
     it('should dismiss notification for a specific version', async () => {
         const mockRelease = {
             tag_name: 'v1.2.1',
-            html_url: 'https://github.com/eduard-lt/Harbor/releases/tag/v1.2.1',
+            html_url: 'https://github.com/eduard-lt/Harbor-Download-Organizer/releases/tag/v1.2.1',
         };
 
         (global.fetch as any).mockResolvedValue({
@@ -121,7 +121,7 @@ describe('useUpdateCheck', () => {
 
         const mockRelease = {
             tag_name: 'v1.2.1',
-            html_url: 'https://github.com/eduard-lt/Harbor/releases/tag/v1.2.1',
+            html_url: 'https://github.com/eduard-lt/Harbor-Download-Organizer/releases/tag/v1.2.1',
         };
 
         (global.fetch as any).mockResolvedValue({

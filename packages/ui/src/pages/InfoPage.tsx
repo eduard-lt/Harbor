@@ -7,7 +7,7 @@ import { useUpdateCheck } from '../hooks/useUpdateCheck';
 
 <div className="flex justify-center gap-4">
     <button
-        onClick={() => open('https://github.com/eduard-lt/Harbor')}
+        onClick={() => open('https://github.com/eduard-lt/Harbor-Download-Organizer')}
         className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
     >
         <span className="material-icons-round text-lg">code</span>
@@ -147,7 +147,7 @@ export function InfoPage() {
                         </p>
 
                         <div className="flex justify-center gap-4">
-                            <a href="https://github.com/eduard-lt/Harbor" target="_blank" rel="noreferrer" className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors">
+                            <a href="https://github.com/eduard-lt/Harbor-Download-Organizer" target="_blank" rel="noreferrer" className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors">
                                 <span className="material-icons-round text-lg">code</span>
                                 GitHub
                             </a>

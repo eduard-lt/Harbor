@@ -8,7 +8,7 @@
 *Keep your workspace clean, automatically.*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Windows](https://img.shields.io/badge/platform-Windows-blue.svg)](https://github.com/eduard-lt/Harbor/releases)
+[![Windows](https://img.shields.io/badge/platform-Windows-blue.svg)](https://github.com/eduard-lt/Harbor-Download-Organizer/releases)
 [![Rust](https://img.shields.io/badge/language-Rust-orange.svg)](https://www.rust-lang.org/)
 
 ---
@@ -38,7 +38,7 @@
 
 ## 📦 Quick Start
 
-1. **Download:** Get the latest `.msi` from [Releases](https://github.com/eduard-lt/Harbor/releases).
+1. **Download:** Get the latest `.msi` from [Releases](https://github.com/eduard-lt/Harbor-Download-Organizer/releases).
 2. **Launch:** Open Harbor from your System Tray.
 3. **Organize:** Use the 11 built-in rules or create your own in the **Rules Management** dashboard.
 4. **Relax:** Turn on **Active Monitoring** and let Harbor handle the rest.
@@ -59,8 +59,8 @@ We are constantly working to make Harbor better. Here is what's on the horizon:
 
 Contributions are what make the open-source community such an amazing place to learn, inspire, and create.
 
-- **Found a bug?** [Open an issue](https://github.com/eduard-lt/Harbor/issues)
-- **Have an idea?** [Submit a feature request](https://github.com/eduard-lt/Harbor/issues)
+- **Found a bug?** [Open an issue](https://github.com/eduard-lt/Harbor-Download-Organizer/issues)
+- **Have an idea?** [Submit a feature request](https://github.com/eduard-lt/Harbor-Download-Organizer/issues)
 - **Want to help?** PRs are always welcome! Check the [Building](#-building-from-source) section to get started.
 
 ---

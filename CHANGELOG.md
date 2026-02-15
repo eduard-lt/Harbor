@@ -138,6 +138,6 @@ rules:
     create_symlink: false  # optional
 ```
 
-[Unreleased]: https://github.com/eduard-lt/Harbor/compare/v1.1.4...HEAD
-[1.1.4]: https://github.com/eduard-lt/Harbor/releases/tag/v1.1.4
-[0.6.0]: https://github.com/eduard-lt/Harbor/releases/tag/v0.6.0
+[Unreleased]: https://github.com/eduard-lt/Harbor-Download-Organizer/compare/v1.1.4...HEAD
+[1.1.4]: https://github.com/eduard-lt/Harbor-Download-Organizer/releases/tag/v1.1.4
+[0.6.0]: https://github.com/eduard-lt/Harbor-Download-Organizer/releases/tag/v0.6.0
