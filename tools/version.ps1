@@ -3,7 +3,7 @@
 
 param(
     [Parameter(Position = 0)]
-    [ValidateSet("show", "refresh", "bump-patch", "bump-minor", "bump-major")]
+    [ValidateSet("show", "refresh", "bump-patch", "bump-minor", "bump-major", "git-release")]
     [string]$Action = "show"
 )
 
@@ -80,6 +80,24 @@ function Set-Version {
         Write-Host "  ! InfoPage.tsx not found" -ForegroundColor Yellow
     }
 
+    # Update tauri.conf.json
+    $TauriConf = Join-Path $RootDir "crates\tauri-app\tauri.conf.json"
+    if (Test-Path $TauriConf) {
+        $tauriContent = Get-Content $TauriConf -Raw
+        # Replace "version": "X.Y.Z" with "version": "$NewVersion"
+        if ($tauriContent -match '"version":\s*"[^"]+"') {
+            $tauriContent = $tauriContent -replace '"version":\s*"[^"]+"', "`"version`": `"$NewVersion`""
+            Set-Content $TauriConf $tauriContent -NoNewline
+            Write-Host "  - crates\tauri-app\tauri.conf.json" -ForegroundColor Gray
+        }
+        else {
+            Write-Host "  ! Version string not found in tauri.conf.json" -ForegroundColor Yellow
+        }
+    }
+    else {
+        Write-Host "  ! tauri.conf.json not found" -ForegroundColor Yellow
+    }
+
     # Update Poe help strings
     Update-Poe-Help $NewVersion
 }
@@ -110,8 +128,30 @@ function Bump-Version {
     Write-Host "Next steps:" -ForegroundColor Cyan
     Write-Host "  1. Review changes: git diff" -ForegroundColor White
     Write-Host "  2. Commit: git commit -am 'chore: bump version to $newVersion'" -ForegroundColor White
-    Write-Host "  3. Tag: git tag v$newVersion" -ForegroundColor White
-    Write-Host "  4. Push: git push && git push --tags" -ForegroundColor White
+    Write-Host "  3. Release: poe git-release" -ForegroundColor White
+}
+
+function Git-Release {
+    $version = Get-Version
+    $tagName = "v$version"
+    
+    Write-Host "Creating git tag: $tagName" -ForegroundColor Cyan
+    git tag $tagName
+    
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Pushing tag to origin..." -ForegroundColor Cyan
+        git push origin $tagName
+        
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "Successfully pushed tag $tagName" -ForegroundColor Green
+        }
+        else {
+            Write-Host "Failed to push tag" -ForegroundColor Red
+        }
+    }
+    else {
+        Write-Host "Failed to create tag (it might already exist)" -ForegroundColor Res
+    }
 }
 
 # Main execution
@@ -123,7 +163,7 @@ switch ($Action) {
     "refresh" {
         $version = Get-Version
         Write-Host "Refreshing version info for: $version" -ForegroundColor Cyan
-        Update-Poe-Help $version
+        Set-Version $version # Re-run set version to ensure all files are synced
     }
     "bump-patch" {
         Bump-Version "patch"
@@ -133,5 +173,8 @@ switch ($Action) {
     }
     "bump-major" {
         Bump-Version "major"
+    }
+    "git-release" {
+        Git-Release
     }
 }

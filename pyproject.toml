@@ -59,6 +59,10 @@ cmd = "powershell -ExecutionPolicy Bypass -File tools/version.ps1 bump-minor"
 help = "Bump major version (1.1.4 -> 2.0.0)"
 cmd = "powershell -ExecutionPolicy Bypass -File tools/version.ps1 bump-major"
 
+[tool.poe.tasks.git-release]
+help = "Create git tag and push for current version"
+cmd = "powershell -ExecutionPolicy Bypass -File tools/version.ps1 git-release"
+
 # ============================================================================
 # DEPENDENCY MANAGEMENT
 # ============================================================================
