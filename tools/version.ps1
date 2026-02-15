@@ -168,7 +168,7 @@ function Git-Release {
         }
     }
     else {
-        Write-Host "Failed to create tag (it might already exist)" -ForegroundColor Res
+        Write-Host "Failed to create tag (it might already exist)" -ForegroundColor Red
     }
 }
 
