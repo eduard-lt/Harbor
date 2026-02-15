@@ -139,8 +139,8 @@ export function RulesPage() {
                 <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs uppercase font-bold tracking-wider border-b border-slate-200 dark:border-slate-800">
                   <tr>
                     <th className="px-6 py-4 w-[15%]">Rule Name</th>
-                    <th className="px-6 py-4 w-[25%]">Extensions</th>
-                    <th className="px-6 py-4 w-[40%]">Destination</th>
+                    <th className="px-6 py-4 w-[30%]">Extensions</th>
+                    <th className="px-6 py-4 w-[35%]">Destination</th>
                     <th className="px-6 py-4 w-[10%] text-center">Status</th>
                     <th className="px-6 py-4 w-[10%] text-center">Actions</th>
                   </tr>
