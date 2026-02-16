@@ -139,6 +139,15 @@ export function UpdateProvider({ children }: { children: ReactNode }) {
                 const currentVersion = packageJson.version;
 
                 if (compareVersions(latestVersion, currentVersion) > 0) {
+                    setUpdateState(prev => ({
+                        ...prev,
+                        available: true,
+                        hasUpdate: true,
+                        version: latestVersion,
+                        url: data.html_url,
+                        checked: true
+                    }));
+
                     // Check if already notified
                     if (lastNotifiedVersion !== latestVersion) {
                         // Send notification

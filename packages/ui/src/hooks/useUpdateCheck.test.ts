@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { useUpdateCheck } from './useUpdateCheck';
 import { UpdateProvider } from '../context/UpdateContext';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -87,6 +87,29 @@ describe('useUpdateCheck', () => {
         });
 
         expect(result.current.updateState.available).toBe(false);
+    });
+
+    it('should not show notification if already dismissed for this version', async () => {
+        localStorage.setItem('harbor_last_notified_version', 'v1.2.1');
+
+        const mockRelease = {
+            tag_name: 'v1.2.1',
+            html_url: 'https://github.com/eduard-lt/Harbor-Download-Organizer/releases/tag/v1.2.1',
+        };
+
+        (global.fetch as any).mockResolvedValue({
+            ok: true,
+            json: async () => mockRelease,
+        });
+
+        const { result } = renderHook(() => useUpdateCheck(), { wrapper });
+
+        await waitFor(() => {
+            expect(result.current.updateState.loading).toBe(false);
+        });
+
+        // Should still be available (red dot), but NO notification toast
+        expect(result.current.updateState.available).toBe(true);
     });
 
     it('should toggle update checks', async () => {
