@@ -107,9 +107,8 @@ fn main() {
 
             // --- AutoStart Logic ---
             let autostart_manager = app.autolaunch();
-            if !autostart_manager.is_enabled().unwrap_or(false) {
-                let _ = autostart_manager.enable();
-            }
+            // Always update the autostart registration to ensure args (like --minimized) are correct
+            let _ = autostart_manager.enable();
 
             // --- Smart Visibility Logic ---
             let args: Vec<String> = std::env::args().collect();
