@@ -19,7 +19,8 @@ const navItems: NavItem[] = [
 
 export function Sidebar() {
   const { serviceStatus, toggleService, loading } = useSettings();
-  const { available, url, dismissNotification } = useUpdateCheck();
+  const { updateState, dismissNotification } = useUpdateCheck();
+  const { available, url } = updateState;
   const serviceEnabled = serviceStatus.running;
   const [showCoachMark, setShowCoachMark] = useState(false);
 

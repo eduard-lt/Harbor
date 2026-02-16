@@ -21,14 +21,19 @@ export function SettingsPage() {
   } = useSettings();
 
   const {
-    checkUpdates,
-    toggleCheckUpdates,
+    checkForUpdates: checkUpdates,
+    setCheckForUpdates: toggleCheckUpdates, // We will wrap this to behave like toggle if needed, or update usage
+    checkNow: refreshUpdateCheck,
+    updateState
+  } = useUpdateCheck();
+
+  const {
     loading: updateLoading,
     error: updateError,
     hasUpdate: updateHasUpdate,
     version: updateVersion,
-    refreshUpdateCheck
-  } = useUpdateCheck();
+    url: updateUrl
+  } = updateState;
 
   const [showResetModal, setShowResetModal] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
@@ -245,7 +250,7 @@ export function SettingsPage() {
                         type="checkbox"
                         className="sr-only peer"
                         checked={checkUpdates}
-                        onChange={toggleCheckUpdates}
+                        onChange={(e) => toggleCheckUpdates(e.target.checked)}
                       />
                       <div className="w-9 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
                     </label>
@@ -258,7 +263,22 @@ export function SettingsPage() {
                     <p className="text-xs text-slate-500">
                       {updateLoading ? 'Checking...' :
                         updateError ? 'Error checking updates' :
-                          updateHasUpdate ? `Update available: ${updateVersion}` :
+                          updateHasUpdate && updateVersion ? (
+                            <span>
+                              Update available:
+                              <a
+                                href={updateUrl || '#'}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="ml-1 text-primary hover:underline font-bold cursor-pointer"
+                                onClick={(e) => {
+                                  if (!updateUrl) e.preventDefault();
+                                }}
+                              >
+                                {updateVersion}
+                              </a>
+                            </span>
+                          ) :
                             'You are up to date.'}
                     </p>
                     {updateError && <p className="text-xs text-red-500 mt-1">{updateError}</p>}

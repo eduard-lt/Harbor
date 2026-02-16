@@ -448,9 +448,11 @@ mod tests {
         let config = DownloadsConfig {
             download_dir: "DL".to_string(),
             rules: vec![],
-            min_age_secs: None,
-            tutorial_completed: None,
-            service_enabled: Some(false),
+            min_age_secs: Some(0),
+            tutorial_completed: Some(false),
+            service_enabled: Some(true),
+            check_updates: Some(true),
+            last_notified_version: None,
         };
         let yaml = serde_yaml::to_string(&config).unwrap();
         std::fs::write(&cfg_path, yaml).unwrap();

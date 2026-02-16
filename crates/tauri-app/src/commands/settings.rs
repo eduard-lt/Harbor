@@ -348,6 +348,54 @@ pub async fn set_tutorial_completed(
     Ok(())
 }
 
+#[tauri::command]
+pub async fn get_check_updates(state: State<'_, AppState>) -> Result<bool, String> {
+    let config = state.config.read().map_err(|e| e.to_string())?;
+    // Default to true if not set
+    Ok(config.check_updates.unwrap_or(true))
+}
+
+#[tauri::command]
+pub async fn set_check_updates(state: State<'_, AppState>, enabled: bool) -> Result<(), String> {
+    {
+        let mut config = state.config.write().map_err(|e| e.to_string())?;
+        config.check_updates = Some(enabled);
+    }
+    // Save to disk
+    let config = state.config.read().map_err(|e| e.to_string())?;
+    if let Ok(yaml) = serde_yaml::to_string(&*config) {
+        std::fs::write(&state.config_path, yaml)
+            .map_err(|e| format!("Failed to write config: {}", e))?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn get_last_notified_version(
+    state: State<'_, AppState>,
+) -> Result<Option<String>, String> {
+    let config = state.config.read().map_err(|e| e.to_string())?;
+    Ok(config.last_notified_version.clone())
+}
+
+#[tauri::command]
+pub async fn set_last_notified_version(
+    state: State<'_, AppState>,
+    version: String,
+) -> Result<(), String> {
+    {
+        let mut config = state.config.write().map_err(|e| e.to_string())?;
+        config.last_notified_version = Some(version);
+    }
+    // Save to disk
+    let config = state.config.read().map_err(|e| e.to_string())?;
+    if let Ok(yaml) = serde_yaml::to_string(&*config) {
+        std::fs::write(&state.config_path, yaml)
+            .map_err(|e| format!("Failed to write config: {}", e))?;
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -404,6 +452,8 @@ mod tests {
             min_age_secs: None,
             tutorial_completed: None,
             service_enabled: Some(false),
+            check_updates: None,
+            last_notified_version: None,
         };
         let yaml = serde_yaml::to_string(&initial_cfg).unwrap();
         std::fs::write(&cfg_path, yaml).unwrap();

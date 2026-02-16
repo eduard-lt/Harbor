@@ -213,9 +213,11 @@ mod tests {
         let config = DownloadsConfig {
             download_dir: download_dir.to_string_lossy().to_string(),
             rules: vec![],
-            min_age_secs: Some(0),
-            tutorial_completed: None,
-            service_enabled: None,
+            min_age_secs: Some(5),
+            tutorial_completed: Some(false),
+            service_enabled: Some(true),
+            check_updates: Some(true),
+            last_notified_version: None,
         };
         (config, tmp)
     }

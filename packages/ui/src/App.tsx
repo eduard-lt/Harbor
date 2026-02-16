@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { SettingsProvider } from './context/SettingsContext';
+import { UpdateProvider } from './context/UpdateContext';
 import { Layout } from './components/Layout';
 import { ActivityLogsPage } from './pages/ActivityLogsPage';
 import { RulesPage } from './pages/RulesPage';
@@ -53,14 +54,16 @@ function App() {
         <BrowserRouter>
           <GlobalNavigationListener />
           <GlobalContextMenuListener />
-          <Routes>
-            <Route path="/" element={<Layout />}>
-              <Route index element={<RulesPage />} />
-              <Route path="activity" element={<ActivityLogsPage />} />
-              <Route path="settings" element={<SettingsPage />} />
-              <Route path="info" element={<InfoPage />} />
-            </Route>
-          </Routes>
+          <UpdateProvider>
+            <Routes>
+              <Route path="/" element={<Layout />}>
+                <Route index element={<RulesPage />} />
+                <Route path="activity" element={<ActivityLogsPage />} />
+                <Route path="settings" element={<SettingsPage />} />
+                <Route path="info" element={<InfoPage />} />
+              </Route>
+            </Routes>
+          </UpdateProvider>
         </BrowserRouter>
       </ThemeProvider>
     </SettingsProvider>

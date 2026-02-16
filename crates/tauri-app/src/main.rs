@@ -92,6 +92,10 @@ fn main() {
             commands::reset_to_defaults,
             commands::get_tutorial_completed,
             commands::set_tutorial_completed,
+            commands::get_check_updates,
+            commands::set_check_updates,
+            commands::get_last_notified_version,
+            commands::set_last_notified_version,
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {

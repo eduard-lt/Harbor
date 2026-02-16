@@ -17,6 +17,8 @@ pub struct DownloadsConfig {
     pub min_age_secs: Option<u64>,
     pub tutorial_completed: Option<bool>,
     pub service_enabled: Option<bool>,
+    pub check_updates: Option<bool>,
+    pub last_notified_version: Option<String>,
 }
 
 pub type OrganizeResult = (PathBuf, PathBuf, String, Option<String>);
@@ -60,6 +62,8 @@ pub fn default_config() -> DownloadsConfig {
         min_age_secs: Some(5),
         tutorial_completed: Some(false),
         service_enabled: Some(true),
+        check_updates: Some(true),
+        last_notified_version: None,
         rules: vec![
             Rule {
                 name: "Images".to_string(),
@@ -617,6 +621,8 @@ mod tests {
             min_age_secs: Some(0), // Immediate move
             tutorial_completed: None,
             service_enabled: None,
+            check_updates: None,
+            last_notified_version: None,
             rules: vec![Rule {
                 name: "Images".into(),
                 extensions: Some(vec!["png".into()]),
@@ -672,6 +678,8 @@ mod tests {
             min_age_secs: None,
             tutorial_completed: None,
             service_enabled: None,
+            check_updates: None,
+            last_notified_version: None,
         };
 
         // Clean up

@@ -23,7 +23,8 @@ import { useUpdateCheck } from '../hooks/useUpdateCheck';
 </div>
 
 export function InfoPage() {
-    const { available, version, url } = useUpdateCheck();
+    const { updateState } = useUpdateCheck();
+    const { available, version, url } = updateState;
     const [activeTab, setActiveTab] = useState<'guide' | 'about'>('guide');
 
     return (

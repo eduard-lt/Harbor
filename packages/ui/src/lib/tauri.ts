@@ -143,3 +143,19 @@ export const getTutorialCompleted = async (): Promise<boolean> => {
 export const setTutorialCompleted = async (completed: boolean): Promise<void> => {
     return await invoke('set_tutorial_completed', { completed });
 };
+
+export const getCheckUpdates = async (): Promise<boolean> => {
+    return await invoke('get_check_updates');
+};
+
+export const setCheckUpdates = async (enabled: boolean): Promise<void> => {
+    return await invoke('set_check_updates', { enabled });
+};
+
+export const getLastNotifiedVersion = async (): Promise<string | null> => {
+    return await invoke('get_last_notified_version');
+};
+
+export const setLastNotifiedVersion = async (version: string): Promise<void> => {
+    return await invoke('set_last_notified_version', { version });
+};
