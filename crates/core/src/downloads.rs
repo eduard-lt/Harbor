@@ -689,6 +689,28 @@ mod tests {
     }
 
     #[test]
+    fn test_load_downloads_config_new_fields() {
+        let yaml = r#"
+download_dir: "C:\\Downloads"
+rules: []
+check_updates: false
+last_notified_version: "v1.2.3"
+"#;
+        let cfg: DownloadsConfig = serde_yaml::from_str(yaml).unwrap();
+        assert_eq!(cfg.check_updates, Some(false));
+        assert_eq!(cfg.last_notified_version, Some("v1.2.3".to_string()));
+
+        // Round trip
+        let serialized = serde_yaml::to_string(&cfg).unwrap();
+        let deserialized: DownloadsConfig = serde_yaml::from_str(&serialized).unwrap();
+        assert_eq!(deserialized.check_updates, Some(false));
+        assert_eq!(
+            deserialized.last_notified_version,
+            Some("v1.2.3".to_string())
+        );
+    }
+
+    #[test]
     fn test_load_downloads_config() {
         let mut file = tempfile::Builder::new().suffix(".yaml").tempfile().unwrap();
         writeln!(

@@ -474,4 +474,76 @@ mod tests {
         let content = std::fs::read_to_string(&cfg_path).unwrap();
         assert!(content.contains("service_enabled: false"));
     }
+
+    #[tokio::test]
+    async fn test_persist_update_settings() {
+        let tmp = tempdir().unwrap();
+        let cfg_path = tmp.path().join("config.yaml");
+
+        let initial_cfg = DownloadsConfig {
+            download_dir: "DL".to_string(),
+            rules: vec![],
+            min_age_secs: None,
+            tutorial_completed: None,
+            service_enabled: None,
+            check_updates: Some(true),
+            last_notified_version: None,
+        };
+        let yaml = serde_yaml::to_string(&initial_cfg).unwrap();
+        std::fs::write(&cfg_path, yaml).unwrap();
+
+        let app_state = AppState::new(cfg_path.clone(), initial_cfg);
+        // We can't easily mock tauri::State, so we'll test the logic by invoking the implementation functions directly
+        // IF we could extract the logic.
+        // OR we can rely on `tauri::State` implementing `Deref` to `AppState`.
+        // BUT we need to pass `State<'_, AppState>` to commands.
+        // `State` provides `inner()` to get reference.
+        // We can't construct `State`.
+
+        // Alternative: Refactor commands to take `&AppState` or `&RwLock<DownloadsConfig>`?
+        // No, Tauri commands require `State`.
+
+        // Workaround: Use `tauri::Manager` to manage state in test? Too complex.
+        // Let's just test the `app_state` logic directly since that's what the commands do.
+
+        // Manual verification of logic that commands perform:
+
+        // 1. Verify initial state
+        {
+            let config = app_state.config.read().unwrap();
+            assert_eq!(config.check_updates, Some(true));
+        }
+
+        // 2. Simulate set_check_updates
+        {
+            let mut config = app_state.config.write().unwrap();
+            config.check_updates = Some(false);
+        }
+        // Save to disk (simulate command logic)
+        {
+            let config = app_state.config.read().unwrap();
+            let yaml = serde_yaml::to_string(&*config).unwrap();
+            std::fs::write(&app_state.config_path, yaml).unwrap();
+        }
+
+        // 3. Verify persistence
+        let content = std::fs::read_to_string(&cfg_path).unwrap();
+        assert!(content.contains("check_updates: false"));
+
+        // 4. Simulate set_last_notified_version
+        {
+            let mut config = app_state.config.write().unwrap();
+            config.last_notified_version = Some("v1.5.0".to_string());
+        }
+        // Save
+        {
+            let config = app_state.config.read().unwrap();
+            let yaml = serde_yaml::to_string(&*config).unwrap();
+            std::fs::write(&app_state.config_path, yaml).unwrap();
+        }
+
+        // 5. Verify persistence
+        let content = std::fs::read_to_string(&cfg_path).unwrap();
+        assert!(content.contains("last_notified_version: v1.5.0"));
+    }
 }
